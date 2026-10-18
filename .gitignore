@@ -1,0 +1,15 @@
+.DS_Store
+node_modules/
+.next/
+out/
+dist/
+coverage/
+playwright-report/
+test-results/
+*.tsbuildinfo
+*.log
+.env*
+!.env.example
+.vercel/
+.local/
+artifacts/

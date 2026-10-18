@@ -1,0 +1,26 @@
+schema: spec-driven
+
+context: |
+  Language: Chinese
+  All artifacts must be written in Chinese.
+  Keep OpenSpec structural headings and SHALL/MUST keywords in English.
+  Project: ai-finance, independent public repository referencing OpenStock.
+  Stage: design review; no application implementation yet.
+  Scope: US market dashboard, stock details, per-user watchlists, sentiment.
+  Users: email/password accounts; watchlists are private to each account.
+  Data: free-first, explicit unavailable states, no fabricated financial data.
+  Stack direction: Next.js App Router, TypeScript, Better Auth, MongoDB,
+    TradingView widgets, optional server-side Finnhub and Adanos adapters.
+
+rules:
+  proposal:
+    - 区分用户已确认的需求与待审阅的技术默认方案。
+    - 明确第一版不包含的功能。
+  specs:
+    - 每个 requirement 包含 SHALL 或 MUST 以及可验收的 WHEN/THEN 场景。
+    - 覆盖未登录、跨用户隔离、并发约束与数据不可用的情况。
+  design:
+    - 说明来源、授权、缓存、密钥与用户数据的边界。
+    - 不把 TradingView 嵌入能力描述为可提取的行情 API。
+  tasks:
+    - 未实现的任务保持未勾选；外部实测与模拟测试分别记录。
