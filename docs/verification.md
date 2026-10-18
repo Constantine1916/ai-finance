@@ -12,7 +12,7 @@
 | 本地 Markdown 文件链接、未完成占位、任务勾选与规格场景检查 | 通过，15 份 Markdown、6 项能力、24 条需求、52 个场景；29 项实施任务均未勾选 |
 | 许可证原文比对 | 通过，与研究基线上游 LICENSE 字节一致 |
 | `git diff --check` 与 `git diff --cached --check` | 通过，新增文件已纳入暂存检查 |
-| GitHub 可见性、非 Fork 状态与远程提交一致性 | 推送后核对 |
+| GitHub 可见性、非 Fork 状态与远程提交一致性 | 通过：`isPrivate=false`、`isFork=false`、默认分支 `main`；首次规格提交 `e27cb2b` 的本地与远程 SHA 一致 |
 
 使用的 CLI：`@fission-ai/openspec@1.14.3`；运行时：Node.js 24.21.0。CLI 通过 `npx` 使用，不全局安装，也不改写用户级代理提示文件。
 
