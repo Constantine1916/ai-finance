@@ -8,18 +8,17 @@
 - 许可：[上游 AGPL-3.0 原文](https://github.com/Open-Dev-Society/OpenStock/blob/dc2db1bb2fdce2da3bb1eba7c51a73ad52f7d464/LICENSE)。本仓库的 `LICENSE` 保留相同许可证原文。
 - 仓库关系：独立 Git 历史，不是 GitHub Fork；这不免除实际改编源码所附带的许可义务。
 
-当前提交只包含规格文档，尚未移植应用源码。后续计划参考或选择性改编以下实现；实际改编时在对应文件保留来源标注，并在本文件登记最终文件映射：
+当前提交只包含规格文档，尚未移植应用源码。2026-10-25 第一阶段改为个人使用的宏观与 AI 产业看板后，参考范围缩小为下表；实际改编时在对应文件保留来源标注，在本文件登记最终文件映射，并把研究基线更新到届时的上游提交（2026-10-25 查看的最新提交为 `855ca6a`）：
 
 | 上游文件 | 参考内容 | 本项目设计中的调整 |
 | --- | --- | --- |
-| `components/TradingViewWidget.tsx`、`lib/constants.ts` | 嵌入脚本与配置组织方式 | 限定美股，保留供应商品牌，增加加载与失败提示 |
-| `lib/better-auth/auth.ts`、`lib/actions/auth.actions.ts` | 邮箱密码账户、会话与 MongoDB | 仅保留第一版账户能力，严格校验服务端会话 |
-| `lib/actions/watchlist.actions.ts`、`database/models/watchlist.model.ts` | 用户维度持久化、自选股上限 | 单文档原子更新，防止并发超出 50 只 |
-| `lib/actions/finnhub.actions.ts` | 服务端请求、缓存、去重与超时 | 增加共享展示授权开关与跨进程配额约束 |
-| `lib/actions/adanos.actions.ts`、`lib/actions/adanos.helpers.ts`、`components/stocks/StockSentimentCard.tsx` | 四类情绪源的接口与规范化 | 独立展示各源状态，不隐藏缺失配置，不把缺失计为零 |
+| `components/TradingViewWidget.tsx`、`lib/constants.ts` | 嵌入脚本与配置组织方式 | 只用于个股详情的 K 线，保留供应商标识，增加加载失败与超时提示 |
+| `lib/seo/edgar.ts` | SEC 访问规范、申报链接构造 | 改为采集 XBRL 财务数据并保存申报编号 |
+
+此前计划参考的账户、自选股、Finnhub 与 Adanos 相关文件属于第 2 阶段范围，第一阶段不改编。
 
 不复制 OpenStock 名称、标志与宣传素材作为本项目品牌。
 
 ## 数据与组件服务
 
-TradingView、Finnhub、Adanos 和 Nasdaq 的名称及数据由相应权利人持有。代码许可不授予其数据的再分发权。使用条件见 [数据源说明](docs/data-sources.md)。后续实际安装依赖时另核对依赖许可；目前尚无应用依赖锁文件。
+FRED 上的第三方序列（S&P、Nasdaq、ICE 等）、日线行情供应商、台积电、TradingView 的名称及数据由相应权利人持有。代码许可不授予其数据的再分发权。使用条件见 [数据源说明](docs/data-sources.md)。后续实际安装依赖时另核对依赖许可；目前尚无应用依赖锁文件。

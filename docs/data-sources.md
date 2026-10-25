@@ -1,34 +1,58 @@
 # 数据源与授权边界
 
-核对日期：2026-10-18。供应商条款、额度与覆盖可能变化，上线前按届时适用条款复核。当前没有采购付费计划，也没有真实供应商凭据测试。
+核对日期：2026-10-25。供应商条款、额度与覆盖可能变化，上线前按届时条款复核。下文“已实测”指在本机发出了真实请求并看到返回；尚未使用任何供应商密钥做完整采集。
 
-| 来源 | 本项目用途 | 免费模式的边界 |
-| --- | --- | --- |
-| TradingView Widgets | 市场、K 线、技术、财务、公司信息嵌入 | 免费组件保留其品牌与归属；覆盖和延迟由组件决定，不能当作自有数据 API |
-| Nasdaq Trader Symbol Directory | 美国上市证券代码、名称、交易所与类型 | 仅作证券元数据；记录来源与快照时间，不等于提供报价或授权其他数据 |
-| Finnhub | 可选的自选股、关注池独立行情字段 | 个人计划不能自动视为允许多用户共享展示，默认关闭，按适用授权启用 |
-| Adanos | Reddit、X、新闻、Polymarket 情绪 | 免费计划每月 250 次请求且非商业；共享展示适用性需确认，默认关闭 |
+## 来源总览
 
-Finnhub / Adanos 没有启用时，账户、自选股身份列表、证券搜索和可用的 TradingView 组件仍是第一版的完整流程。依赖这些 API 的字段应显示未配置或受限，不能用从组件抓取数据的方式填补。
+| 等级 | 来源 | 用途 | 获取方式 | 状态 |
+| --- | --- | --- | --- | --- |
+| 官方一手 | [FRED](https://fred.stlouisfed.org/) | 利率、通胀、信用、就业、增长、流动性、部分指数 | 官方 API，需要免费密钥 | 已实测（无密钥图表 CSV），见下表 |
+| 官方一手 | [SEC EDGAR](https://www.sec.gov/search-filings/edgar-application-programming-interfaces) | 美股公司财报与申报列表 | `companyfacts`、`submissions` 接口，无需密钥，需声明 User-Agent | 已实测 NVDA、GOOGL、TSM |
+| 官方一手 | 台积电投资者关系、台湾公开资讯观测站、SEC 6-K | 台积电月营收 | 官网采集，以 6-K 交叉核对 | 已确认 EDGAR 上台积电持续报送 6-K；官网页面尚未采集 |
+| 官方一手 | 韩国关税厅 | 半导体出口（每月 1 日全月、21 日前 20 天） | 先人工录入；data.go.kr 接口待核实 | 未实测 |
+| 商业接口 | 日线行情（默认 Tiingo 免费档） | ETF 与个股的复权收盘价 | API，需要免费密钥 | 未实测；公开资料对免费额度说法不一，需在官网核实 |
+| 付费或无接口 | TrendForce、DRAMeXchange | 存储现货与合约价格 | 人工录入公开报告，不抓取网页 | — |
+| 付费 | FactSet、LSEG 等 | 分析师一致预期与盈利修正 | 第一阶段不提供 | — |
+| 嵌入展示 | [TradingView Widgets](https://www.tradingview.com/widget/) | 个股详情的 K 线 | 浏览器加载，保留其标识 | 只展示，不提取数据 |
 
-供应商失败不等于数值为零。缓存获取时间也不等于行情本身的时间。默认行情缓存 1 小时、情绪缓存 24 小时；应用会展示自建字段的时效。TradingView 内部时间与延迟使用其自身标识。
+## FRED 序列实测结果
 
-## 一手资料
+2026-10-25 通过 `fredgraph.csv` 逐个请求，记录可得的起始日期。实现时改用带密钥的官方 API。
 
-- [TradingView 官方 Widgets 说明与常见问题](https://www.tradingview.com/widget/)：组件能力、数据覆盖、品牌与 API 边界。
-- [Finnhub 服务条款](https://finnhub.io/terms-of-service)：个人使用、业务使用、共享与再分发边界。
-- [Adanos 官方定价](https://adanos.com/pricing)：免费额度、来源与商业使用限制。
-- [Nasdaq Trader 目录字段定义](https://www.nasdaqtrader.com/trader.aspx?id=symboldirdefs)：目录格式、测试证券、ETF 与交易所字段。
-- [Nasdaq 上市证券目录](https://www.nasdaqtrader.com/dynamic/SymDir/nasdaqlisted.txt)与[其他交易所上市目录](https://www.nasdaqtrader.com/dynamic/SymDir/otherlisted.txt)：拟导入的元数据来源。
+| 类别 | 序列 | 起始 | 说明 |
+| --- | --- | --- | --- |
+| 利率 | `DGS3MO`、`DGS2`、`DGS5`、`DGS10`、`DGS20`、`DGS30` | 1962～1981 | 日度 |
+| 利差 | `T10Y2Y`、`T10Y3M` | 1976、1982 | 日度 |
+| 实际利率与通胀预期 | `DFII10`、`T10YIE`、`T5YIFR` | 2003 | 日度 |
+| 期限溢价 | `THREEFYTP10` | 1990 | Kim-Wright 模型 |
+| 政策利率 | `DFF` | 1954 | 日度 |
+| 通胀 | `CPIAUCSL`、`CPILFESL`、`PCEPILFE` | 1947～1959 | 月度 |
+| 商品与美元 | `DCOILWTICO`、`DCOILBRENTEU`、`DTWEXBGS`、`APU000072610`（电价） | 1978～2006 | — |
+| 信用 | `BAMLH0A0HYM2`、`BAMLC0A0CM` | **仅最近 3 年**（2023-10 起） | ICE 版权；长历史用 HYG/IEF 比值替代 |
+| 就业与增长 | `UNRATE`、`SAHMREALTIME`、`ICSA`、`PAYEMS`、`INDPRO`、`IPG3344S` | 1919～1972 | `IPG3344S` 为半导体与电子元件工业产出 |
+| 制造业调查 | `GACDFSA066MSFRBPHI`、`NOCDFSA066MSFRBPHI` | 1968 | 费城联储，替代需付费的 ISM |
+| 流动性 | `WALCL`、`WTREGEN`、`RRPONTSYD`、`NFCI` | 1971～2003 | 单位不同：从数值量级看 `WALCL`、`WTREGEN` 为百万美元，`RRPONTSYD` 为十亿美元，实现时以序列元数据为准 |
+| 指数 | `SP500` | **仅最近 10 年** | S&P 版权 |
+| 指数 | `NASDAQCOM`、`NASDAQ100` | 1971、1986 | Nasdaq 版权 |
+| 波动率 | `VIXCLS`、`VXVCLS` | 1990、2007 | VIX 与 VIX3M |
+| 不可得 | 罗素 2000（`RU2000PR`）、费城半导体指数 | — | 请求返回网页而非数据；改用 IWM、SOXX |
 
-## 上游实现依据
+## SEC EDGAR 实测结果
 
-研究固定在 [OpenStock 基线提交](https://github.com/Open-Dev-Society/OpenStock/tree/dc2db1bb2fdce2da3bb1eba7c51a73ad52f7d464)。
+- 必须在 User-Agent 中注明用途与联系邮箱，请求频率低于每秒 10 次（[SEC 访问规范](https://www.sec.gov/os/accessing-edgar-data)）。联系邮箱通过环境变量 `SEC_USER_AGENT` 配置，不写入仓库。
+- NVDA、GOOGL 可取得 2026 年的季报数据。
+- 同一指标的科目名称会变：NVDA 的 `PaymentsToAcquirePropertyPlantAndEquipment` 只到 2020 年，之后改用其他科目，需要按公司维护映射。
+- 季报数值是年初至今累计值，单季值需要相减得到。
+- 台积电（TSM）只有年度 20-F，采用 `ifrs-full` 科目、新台币计价。
+- `companyfacts` 不含分部数据，NVDA 数据中心收入、谷歌云与 AWS 收入需要人工录入或另行解析申报原文。
 
-- [TradingViewWidget.tsx](https://github.com/Open-Dev-Society/OpenStock/blob/dc2db1bb2fdce2da3bb1eba7c51a73ad52f7d464/components/TradingViewWidget.tsx)：组件脚本容器。
-- [finnhub.actions.ts](https://github.com/Open-Dev-Society/OpenStock/blob/dc2db1bb2fdce2da3bb1eba7c51a73ad52f7d464/lib/actions/finnhub.actions.ts)：服务端行情调用与缓存。
-- [watchlist.actions.ts](https://github.com/Open-Dev-Society/OpenStock/blob/dc2db1bb2fdce2da3bb1eba7c51a73ad52f7d464/lib/actions/watchlist.actions.ts)：用户自选股流程。
-- [adanos.helpers.ts](https://github.com/Open-Dev-Society/OpenStock/blob/dc2db1bb2fdce2da3bb1eba7c51a73ad52f7d464/lib/actions/adanos.helpers.ts)：来源接口、字段解析和规范化。
-- [auth.ts](https://github.com/Open-Dev-Society/OpenStock/blob/dc2db1bb2fdce2da3bb1eba7c51a73ad52f7d464/lib/better-auth/auth.ts)：Better Auth 与数据库配置。
+## 使用边界
 
-Inngest 用于上游的邮件和定时流程，本项目这四个模块不需要先引入。Adanos 的新闻来源不扩展为新闻独立板块。
+- 第一阶段为私有部署、个人使用。FRED 上由 S&P、Nasdaq、ICE 等持有版权的序列只在受登录保护的页面展示，不对外再分发。
+- 不使用多个免费账户轮换密钥来扩大额度。
+- TradingView 组件中的数据不能被本系统提取、存储或用于计算。
+- 缺失数据显示缺失；替代指标（如 IWM 代替罗素 2000）在页面上标注。
+
+## 参考项目的数据来源
+
+OpenStock（2026-10-25 查看的提交 `855ca6a`）的数据来自 TradingView 嵌入组件与 Finnhub 报价、档案、基本指标、新闻和搜索接口，情绪来自 Adanos，EDGAR 只用于申报链接与代码表。它不保存历史时间序列，也没有宏观数据，因此本项目的数据层自行实现。

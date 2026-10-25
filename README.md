@@ -1,27 +1,28 @@
 # ai-finance
 
-面向中长期美股与 AI 股票研究的数据看板。以 [OpenStock](https://github.com/Open-Dev-Society/OpenStock) 的实现方式为参考，独立建仓，不使用 GitHub Fork。
+个人使用的美股宏观与 AI 产业周期看板。把宏观周期、流动性、市场宽度与 AI 硬件产业数据放在一处，每个数值都可追溯来源，辅助中长期的持有与仓位判断。
 
 **当前状态：规格设计阶段，等待用户审阅。尚无应用代码，不能启动看板。**
 
-## 第一版范围
+## 第一阶段范围
 
-| 模块 | 计划行为 |
-| --- | --- |
-| 美股市场看板 | 美股市场概览、TradingView 热力图、人工维护的 AI 关注池、证券搜索 |
-| 个股详情 | TradingView K 线、技术指标、财务与公司信息；独立显示数据来源与受限状态 |
-| 自选股 | 邮箱密码账户、每人独立保存，最多 50 只，支持添加、删除与跨会话恢复 |
-| 情绪分析 | 对接 Adanos 的 Reddit、X、新闻、Polymarket 数据，分别展示各来源覆盖情况 |
+| 分期 | 模块 | 内容 |
+| --- | --- | --- |
+| 1A | 宏观看板 | 美债利率与期限利差、实际利率、期限溢价、通胀、原油、美元、信用利差、就业与增长、流动性与金融条件 |
+| 1A | 大盘与市场宽度 | 标普 500、纳斯达克、罗素 2000、半导体、VIX；200 日均线、回撤、相对强弱、VIX 期限结构 |
+| 1A | 周期信号 | 增长与通胀周期象限；规则公开、阈值可调的信号灯及其历史表现 |
+| 1A | 事件日历 | FOMC、CPI、非农、PCE、初请失业金与关注公司财报日 |
+| 1B | AI 产业周期 | 云厂商资本开支、台积电月营收、韩国半导体出口、分层关注池、财报基本面、估值与周期股视图 |
 
-免费优先。没有密钥、没有适用授权、额度耗尽或供应商无覆盖时，明确显示原因。不会用演示价格、零值或生成内容填补缺失的真实金融数据。
+数据为日线及更低频率，每日批量采集后存入本地时间序列库，页面不直接调用供应商。缺失、待确认、过期与修订都明确标出，不用演示数据或估算值填补。信号只是规则判断，不生成综合评分或买卖指令。
 
-账户是支撑能力。第一版不含价格提醒、新闻独立页面、AI 邮件、交易执行、持仓核算、社交登录和密码重置。只做美股市场入口。
+第一阶段不含多用户、自选股、情绪分析、推送提醒、分析师一致预期、盘中行情、交易与持仓功能。
 
 ## 规格与开发方式
 
 采用 OpenSpec 的 SDD 流程：需求场景 → 技术设计 → 实施任务 → 实现与验证 → 归档。规格检查通过不代表功能已实现。
 
-- [设计审阅入口](docs/superpowers/specs/2026-10-18-ai-finance-design.md)
+- [设计审阅入口](docs/superpowers/specs/2026-10-25-ai-finance-macro-design.md)
 - [需求提案](openspec/changes/build-ai-finance-mvp/proposal.md)
 - [技术设计](openspec/changes/build-ai-finance-mvp/design.md)
 - [六项能力的验收规格](openspec/changes/build-ai-finance-mvp/specs/)
@@ -29,14 +30,14 @@
 - [数据源与授权边界](docs/data-sources.md)
 - [验证记录](docs/verification.md)
 
-本机已验证 Node.js 24 可运行以下文档检查；OpenSpec CLI 固定为 1.14.3：
+规格校验（OpenSpec CLI 固定为 1.14.3，已在 Node.js 22 与 24 上运行）：
 
 ```sh
 OPENSPEC_TELEMETRY=0 OPENSPEC_NO_UPDATE_CHECK=1 npx --yes @fission-ai/openspec@1.14.3 validate build-ai-finance-mvp --strict
 ```
 
-拟采用 Next.js App Router、TypeScript、Tailwind CSS、Better Auth、MongoDB、TradingView 嵌入组件，以及可选的 Finnhub / Adanos 服务端适配器。规格批准后再固定应用依赖版本并实现本地运行与 Docker 交付。
+拟采用 Next.js App Router、TypeScript、SQLite 与 Drizzle、ECharts，在自有 VPS 上以 pm2 与 cron 运行。技术方案批准后再固定依赖版本。
 
 ## 开源与来源
 
-本项目使用 [AGPL-3.0](LICENSE)，复用范围与来源见 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。本仓库不是 OpenStock 官方产品。数据服务与 TradingView 组件各自的条款不因代码开源而改变。
+本项目使用 [AGPL-3.0](LICENSE)，参考 [OpenStock](https://github.com/Open-Dev-Society/OpenStock) 的部分实现，复用范围与来源见 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。本仓库不是 OpenStock 官方产品。FRED 中由 S&P、Nasdaq、ICE 等第三方持有版权的序列只在私有部署中供个人使用；数据服务与 TradingView 组件各自的条款不因代码开源而改变。
