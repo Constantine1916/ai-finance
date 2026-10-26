@@ -6,15 +6,15 @@
 
 | 等级 | 来源 | 用途 | 获取方式 | 状态 |
 | --- | --- | --- | --- | --- |
-| 官方一手 | [FRED](https://fred.stlouisfed.org/) | 利率、通胀、信用、就业、增长、流动性、部分指数 | 官方 API，需要免费密钥 | 已实测（无密钥图表 CSV），见下表 |
+| 官方一手 | [FRED](https://fred.stlouisfed.org/) | 利率、通胀、信用、就业、增长、流动性、部分指数 | 官方 API，需要免费密钥 | 2026-10-26 用密钥实测官方 API 可用；序列可得性见下表 |
 | 官方一手 | [美国财政部收益率曲线](https://home.treasury.gov/resource-center/data-chart-center/interest-rates) | 当日国债收益率（1 个月至 30 年） | 官网 CSV，无需密钥 | 已实测：2026-10-25 已有 10-23 的数据，同一时间 FRED `DGS10` 只到 10-22 |
 | 官方一手 | [BLS API](https://www.bls.gov/developers/) | CPI、非农（发布即取） | v1 无需密钥（每日次数较少），v2 需免费密钥 | 已实测 v1：取得核心 CPI 2026 年 9 月数据 |
-| 官方一手 | [BEA API](https://apps.bea.gov/api/) | PCE（发布即取） | 需免费密钥 | 未实测 |
+| 官方一手 | [BEA API](https://apps.bea.gov/api/) | PCE（发布即取） | 需免费密钥 | 2026-10-26 激活后实测可用：NIPA 表 T20804 第 25 行（`DPCCRG`，核心 PCE 价格指数）2026 年 8 月为 130.455，与 FRED `PCEPILFE` 一致。同表第 31 行是“市场定价”口径（`DPCXRG`），名称相近，须按序列代码取值 |
 | 商业接口 | [Finnhub](https://finnhub.io/) | 盘中报价快照（与 OpenStock 相同的 `/quote`） | 免费密钥，每分钟 60 次 | 2026-10-26 用免费密钥实测：SPY 报价可用；K 线返回 403；VIX 等指数报价需要付费订阅。因此只用于股票与 ETF 盘中快照 |
 | 官方一手 | [SEC EDGAR](https://www.sec.gov/search-filings/edgar-application-programming-interfaces) | 美股公司财报与申报列表 | `companyfacts`、`submissions` 接口，无需密钥，需声明 User-Agent | 已实测 NVDA、GOOGL、TSM |
 | 官方一手 | 台积电投资者关系、台湾公开资讯观测站、SEC 6-K | 台积电月营收 | 官网采集，以 6-K 交叉核对 | 已确认 EDGAR 上台积电持续报送 6-K；官网页面尚未采集 |
 | 官方一手 | 韩国关税厅 | 半导体出口（每月 1 日全月、21 日前 20 天） | 先人工录入；data.go.kr 接口待核实 | 未实测 |
-| 商业接口 | 日线行情（默认 Tiingo 免费档） | ETF 与个股的复权收盘价 | API，需要免费密钥 | 未实测；公开资料对免费额度说法不一，需在官网核实 |
+| 商业接口 | [Tiingo](https://www.tiingo.com/) 日线行情 | ETF 与个股的复权收盘价 | API，免费密钥 | 2026-10-26 实测可用：NVDA 2024-06-10 拆股（系数 10）前后复权价连续，SOXX 最新到 10-23。免费档：每小时 50 次、每日 1000 次、每月 500 个代码、每月 1 GB 流量，许可为“仅限个人内部使用”，与本项目的私有部署一致 |
 | 付费或无接口 | TrendForce、DRAMeXchange | 存储现货与合约价格 | 人工录入公开报告，不抓取网页 | — |
 | 付费 | FactSet、LSEG 等 | 分析师一致预期与盈利修正 | 第一阶段不提供 | — |
 | 嵌入展示 | [TradingView Widgets](https://www.tradingview.com/widget/) | 个股详情的 K 线 | 浏览器加载，保留其标识 | 只展示，不提取数据 |
@@ -35,7 +35,7 @@
 | 信用 | `BAMLH0A0HYM2`、`BAMLC0A0CM` | **仅最近 3 年**（2023-10 起） | ICE 版权；长历史用 HYG/IEF 比值替代 |
 | 就业与增长 | `UNRATE`、`SAHMREALTIME`、`ICSA`、`PAYEMS`、`INDPRO`、`IPG3344S` | 1919～1972 | `IPG3344S` 为半导体与电子元件工业产出 |
 | 制造业调查 | `GACDFSA066MSFRBPHI`、`NOCDFSA066MSFRBPHI` | 1968 | 费城联储，替代需付费的 ISM |
-| 流动性 | `WALCL`、`WTREGEN`、`RRPONTSYD`、`NFCI` | 1971～2003 | 单位不同：从数值量级看 `WALCL`、`WTREGEN` 为百万美元，`RRPONTSYD` 为十亿美元，实现时以序列元数据为准 |
+| 流动性 | `WALCL`、`WTREGEN`、`RRPONTSYD`、`NFCI` | 1971～2003 | 单位不同：`WTREGEN` 经 API 元数据确认为百万美元；`WALCL` 从量级看为百万美元，`RRPONTSYD` 为十亿美元，实现时以序列元数据为准 |
 | 指数 | `SP500` | **仅最近 10 年** | S&P 版权 |
 | 指数 | `NASDAQCOM`、`NASDAQ100` | 1971、1986 | Nasdaq 版权 |
 | 波动率 | `VIXCLS`、`VXVCLS` | 1990、2007 | VIX 与 VIX3M |

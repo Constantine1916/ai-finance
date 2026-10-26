@@ -2,7 +2,7 @@
 
 个人使用的美股宏观与 AI 产业周期看板。把宏观周期、流动性、市场宽度与 AI 硬件产业数据放在一处，每个数值都可追溯来源，辅助中长期的持有与仓位判断。
 
-**当前状态：规格设计阶段，等待用户审阅。尚无应用代码，不能启动看板。**
+**当前状态：规格已批准，正在实现 1A。目前只有应用骨架与数据库结构，还没有数据页面。**
 
 ## 第一阶段范围
 
@@ -36,7 +36,20 @@
 OPENSPEC_TELEMETRY=0 OPENSPEC_NO_UPDATE_CHECK=1 npx --yes @fission-ai/openspec@1.14.3 validate build-ai-finance-mvp --strict
 ```
 
-已确认采用 Next.js App Router、TypeScript、PostgreSQL 与 Drizzle、ECharts，在自有 VPS 上以 pm2（web 与 worker）和 cron 运行，经 Nginx 部署在 `finance.aicave.cn`。规格批准后再固定依赖版本。
+采用 Next.js 16、TypeScript 6、PostgreSQL 17 与 Drizzle、ECharts，在自有 VPS 上以 pm2（web 与 worker）和 cron 运行，经 Nginx 部署在 `finance.aicave.cn`。
+
+## 本地运行
+
+需要 Node.js 22.12 以上与 Docker。
+
+```sh
+cp .env.example .env               # 填写数据库密码、会话密钥与各数据源密钥
+npx --yes npm@11.21.0 ci
+npm run db:up && npm run db:migrate
+npm run dev                        # http://127.0.0.1:3020
+```
+
+提交前运行 `npm run typecheck && npm run lint && npm run test && npm run build`。
 
 ## 开源与来源
 

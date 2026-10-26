@@ -6,12 +6,27 @@
 
 ## 当前状态
 
-- 仓库只有规格文档，没有应用代码。状态以 `openspec/changes/build-ai-finance-mvp/tasks.md` 的勾选情况为准。
-- 2026-10-25 起第一阶段改为个人使用的宏观与 AI 产业看板，旧的多用户四模块草案已被替换（见 git 历史）。
-- 规格未经用户批准前，不创建应用骨架、不安装依赖。
+- 规格已于 2026-10-26 获用户批准，正在实现 1A。进度以 `openspec/changes/build-ai-finance-mvp/tasks.md` 的勾选情况为准。
+- 第一阶段是个人使用的宏观与 AI 产业看板，旧的多用户四模块草案已被替换（见 git 历史）。
 - 修改规格时同时遵守 `openspec/config.yaml` 中的 `rules`。
 
 ## 常用命令
+
+依赖安装必须用 `package.json` 中 `packageManager` 固定的 npm 11（全局 npm 10.9.4 解析 Vitest 依赖时会崩溃）：
+
+```sh
+npx --yes npm@11.21.0 ci          # 安装依赖；npm 11 默认拦截依赖的安装脚本，esbuild 与 Argon2 无需这些脚本
+npm run db:up                      # 启动 PostgreSQL 容器（127.0.0.1:5434），需要 .env 中的 POSTGRES_PASSWORD
+npm run db:migrate                 # 应用 drizzle/ 中的迁移
+npm run db:generate -- --name <名称>  # 修改 src/db/schema.ts 后生成迁移
+npm run dev                        # 开发服务器 http://127.0.0.1:3020
+npm run worker                     # 采集调度器（目前只写心跳）
+npm run typecheck && npm run lint && npm run test && npm run build   # 提交前四项检查
+npm run check:secrets -- .next     # 扫描构建产物中是否出现 .env 里的密钥值
+npm run hash-password              # 生成 OWNER_PASSWORD_HASH
+```
+
+运行配置放在仓库根目录 `.env`（权限 600，已被 .gitignore 排除），模板见 `.env.example`。密钥绝不提交。
 
 规格校验（OpenSpec CLI 固定 1.14.3，通过 npx 使用，不全局安装）：
 

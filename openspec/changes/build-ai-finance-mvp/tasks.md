@@ -1,9 +1,9 @@
 ## 1. 工程基础（1A）
 
-- [ ] 1.1 在用户批准规格后，固定 Next.js、React、TypeScript 与 Node 版本，建立应用（`web` 与 `worker` 两个入口）、锁文件以及 `typecheck`、`lint`、`test`、`build` 命令；验证：干净检出后四个命令全部通过。
-- [ ] 1.2 提供本地与 VPS 共用的 PostgreSQL 17 容器配置（只监听 127.0.0.1），建立 Drizzle 迁移并创建 design.md 所列数据表；验证：迁移在空库上执行成功，`pg_dump` 备份恢复后数据一致。
-- [ ] 1.3 实现运行时配置校验（FRED、BEA、Finnhub、日线供应商密钥，`SEC_USER_AGENT`，所有者凭据，会话密钥，可信代理）；验证：测试覆盖缺少必填项时拒绝启动受保护功能，且日志不输出密钥值。
-- [ ] 1.4 在 CLAUDE.md 与 README 补充构建、测试、启动命令；验证：按文档在新目录中能启动开发服务器。
+- [x] 1.1 在用户批准规格后，固定 Next.js、React、TypeScript 与 Node 版本，建立应用（`web` 与 `worker` 两个入口）、锁文件以及 `typecheck`、`lint`、`test`、`build` 命令；验证：干净检出后四个命令全部通过。
+- [x] 1.2 提供本地与 VPS 共用的 PostgreSQL 17 容器配置（只监听 127.0.0.1），建立 Drizzle 迁移并创建 design.md 所列数据表；验证：迁移在空库上执行成功，`pg_dump` 备份恢复后数据一致。
+- [x] 1.3 实现运行时配置校验（FRED、BEA、Finnhub、日线供应商密钥，`SEC_USER_AGENT`，所有者凭据，会话密钥，可信代理）；验证：测试覆盖缺少必填项时拒绝启动受保护功能，且日志不输出密钥值。
+- [x] 1.4 在 CLAUDE.md 与 README 补充构建、测试、启动命令；验证：按文档在新目录中能启动开发服务器。
 
 ## 2. 访问保护（1A）
 

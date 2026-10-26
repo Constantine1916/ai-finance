@@ -1,0 +1,22 @@
+# 本地与 VPS 共用的 PostgreSQL，只监听本机回环地址
+services:
+  db:
+    image: postgres:17.9-alpine
+    container_name: ai-finance-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ai_finance
+      POSTGRES_USER: ai_finance
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+    ports:
+      - "127.0.0.1:5434:5432"
+    volumes:
+      - ai-finance-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ai_finance -d ai_finance"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  ai-finance-pgdata:

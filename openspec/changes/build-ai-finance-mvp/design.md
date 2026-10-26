@@ -69,6 +69,14 @@ pm2: worker（调度器）→ 各来源适配器 → 校验 → PostgreSQL 时�
 
 全栈 TypeScript：Next.js App Router 负责页面与接口；worker 是同一仓库内的 Node 进程，共用数据模型、适配器与校验代码。运行时 Node 22 LTS。
 
+实施时固定的版本（2026-10-26）：Next.js 16.4.3、React 19.3.0、TypeScript 6.0.3、ESLint 9.39.5、Vitest 5.0.3、Drizzle ORM 0.45.4、PostgreSQL 17.9。取舍：
+
+- TypeScript 7 是新的原生编译器，Next.js 构建、typescript-eslint 与 Drizzle 依赖的编译器 API 不在其兼容承诺内，因此用 6.x。
+- ESLint 10 不被 `eslint-config-next` 内置插件支持，因此用 9.x。
+- Next.js 16.4.0 存在已公布的严重漏洞（GHSA-2464-fhr4-w9xw、GHSA-673q-mjm6-r5xr 等），升级到修复版 16.4.3；该版本发布不足两周，安全修复优先。
+- 全局 npm 10.9.4 解析 Vitest 依赖时崩溃，项目用 `packageManager` 固定 npm 11.21.0。
+- 端口：PostgreSQL 用 127.0.0.1:5434（5433 已被其他项目占用），web 用 127.0.0.1:3020。
+
 ### 4. 存储（已确认 PostgreSQL）
 
 PostgreSQL 17 + Drizzle ORM 与迁移脚本。
