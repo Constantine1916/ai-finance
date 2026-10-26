@@ -47,3 +47,27 @@ GitHub API 已确认这两次提交的作者和提交者均使用指定姓名、
 未执行：带密钥的 FRED API 采集、日线行情供应商实测（免费额度与条款尚未在官网核实）、韩国关税厅接口核实、台积电官网月营收采集，以及全部应用层检查（应用尚未实现）。
 
 提交身份规则按用户要求调整为只要求邮箱 `constantine1916@foxmail.com`，姓名不限。GitHub API 确认此前提交通过该邮箱关联到账号 `Constantine1916`；本次提交使用全局身份 `Constantine1916 <constantine1916@foxmail.com>`。
+
+## 2026-10-26：确认技术方案、时效性与可编辑关注池
+
+用户确认 PostgreSQL、全栈 TypeScript、pm2 与 cron、`aicave.cn` 子域名部署、默认信号阈值；要求优先保证时效性，关注池可编辑。规格据此更新，仍只有文档。
+
+| 检查 | 状态 |
+| --- | --- |
+| OpenSpec `validate build-ai-finance-mvp --strict` | 通过 |
+| 本地 Markdown 链接与规格结构 | 通过：16 份 Markdown 无断链；6 项能力、36 条需求、82 个场景；51 项实施任务均未勾选；文档中不再出现 SQLite |
+| `git diff --cached --check` | 通过 |
+| 美国财政部收益率曲线 CSV | 通过：2026-10-25 已有 10-23 数据，比 FRED `DGS10` 早一天 |
+| BLS API v1（无密钥） | 通过：取得核心 CPI 2026 年 9 月数据 |
+| Finnhub K 线（无密钥） | 返回 401；免费密钥是否可用待实测 |
+| VPS 环境 | Nginx 监听 80/443；`aicave.cn` 解析到本机；现有证书只含 `aicave.cn` 与 `www.aicave.cn`；`finace.aicave.cn` 与 `finance.aicave.cn` 均无 DNS 记录；Docker 可用 |
+
+未执行：带密钥的 FRED、BEA、Finnhub、Tiingo 实测；CBOE VIX 历史 CSV 地址返回网页而非数据，未采用；全部应用层检查。
+
+## 2026-10-26：域名与 Finnhub 实测
+
+| 检查 | 状态 |
+| --- | --- |
+| 阿里云 DNS | 按用户要求，用 VPS 上 acme.sh 保存的阿里云凭据添加 `finance.aicave.cn` A 记录（指向 `101.32.243.232`）；权威 DNS 与公共解析器（223.5.5.5）均已返回该地址；原有 7 条记录未改动 |
+| Finnhub 免费密钥 | `/quote` SPY 返回报价；`/stock/candle` 返回 403；`^VIX` 返回需要付费订阅 |
+| 本地配置 | Finnhub 密钥与 `SEC_USER_AGENT` 写入仓库根目录 `.env`（权限 600，已被 `.gitignore` 排除，未提交） |

@@ -61,6 +61,10 @@
 - **WHEN** 计算 ETF 或个股的均线、回撤与涨跌幅
 - **THEN** 系统使用拆股与分红调整后的价格，拆股前后数值连续
 
+#### Scenario: During trading hours
+- **WHEN** 用户在美股交易时段查看大盘与市场宽度
+- **THEN** ETF 价格、200 日均线位置与相对强弱使用最新盘中快照，标为盘中暂定并显示快照时间；没有盘中数据的指数（如 VIX）显示最近的正式数据日期
+
 #### Scenario: Volatility term structure
 - **WHEN** VIX/VIX3M 大于 1
 - **THEN** 图表标示期限结构倒挂区间

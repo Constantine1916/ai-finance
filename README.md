@@ -14,7 +14,7 @@
 | 1A | 事件日历 | FOMC、CPI、非农、PCE、初请失业金与关注公司财报日 |
 | 1B | AI 产业周期 | 云厂商资本开支、台积电月营收、韩国半导体出口、分层关注池、财报基本面、估值与周期股视图 |
 
-数据为日线及更低频率，每日批量采集后存入本地时间序列库，页面不直接调用供应商。缺失、待确认、过期与修订都明确标出，不用演示数据或估算值填补。信号只是规则判断，不生成综合评分或买卖指令。
+时效性优先：宏观数据在官方发布后尽快采集；美股交易时段内，关注池与大盘 ETF 每 5 分钟更新一次盘中快照，标为暂定，收盘后以收盘价确认。数据统一存入本地时间序列库，页面不直接调用供应商。AI 关注池可以随时在页面上增减。缺失、待确认、过期与修订都明确标出，不用演示数据或估算值填补。信号只是规则判断，不生成综合评分或买卖指令。
 
 第一阶段不含多用户、自选股、情绪分析、推送提醒、分析师一致预期、盘中行情、交易与持仓功能。
 
@@ -36,7 +36,7 @@
 OPENSPEC_TELEMETRY=0 OPENSPEC_NO_UPDATE_CHECK=1 npx --yes @fission-ai/openspec@1.14.3 validate build-ai-finance-mvp --strict
 ```
 
-拟采用 Next.js App Router、TypeScript、SQLite 与 Drizzle、ECharts，在自有 VPS 上以 pm2 与 cron 运行。技术方案批准后再固定依赖版本。
+已确认采用 Next.js App Router、TypeScript、PostgreSQL 与 Drizzle、ECharts，在自有 VPS 上以 pm2（web 与 worker）和 cron 运行，经 Nginx 部署在 `finance.aicave.cn`。规格批准后再固定依赖版本。
 
 ## 开源与来源
 

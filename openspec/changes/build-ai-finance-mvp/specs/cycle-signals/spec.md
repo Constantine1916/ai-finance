@@ -15,6 +15,10 @@
 - **WHEN** 规则的任一输入缺失、过期或待确认
 - **THEN** 该信号显示数据不足及原因，不显示为正常
 
+#### Scenario: Intraday provisional state
+- **WHEN** 基于价格的信号在交易时段按盘中快照越过阈值
+- **THEN** 信号显示为盘中暂定；收盘确认后才写入状态日志与历史统计，盘中来回翻转不产生日志记录
+
 ### Requirement: No composite score or trading instruction
 系统 MUST NOT 生成跨信号的综合评分、仓位比例或买卖指令；总览页面 SHALL 说明信号只是规则判断，仓位决定由用户作出。
 

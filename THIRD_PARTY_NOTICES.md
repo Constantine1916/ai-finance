@@ -14,8 +14,9 @@
 | --- | --- | --- |
 | `components/TradingViewWidget.tsx`、`lib/constants.ts` | 嵌入脚本与配置组织方式 | 只用于个股详情的 K 线，保留供应商标识，增加加载失败与超时提示 |
 | `lib/seo/edgar.ts` | SEC 访问规范、申报链接构造 | 改为采集 XBRL 财务数据并保存申报编号 |
+| `lib/actions/finnhub.actions.ts` | `/quote` 报价请求、超时与失败记录 | 只在 worker 中定时采集盘中快照，使用单一密钥，不轮换多个免费密钥 |
 
-此前计划参考的账户、自选股、Finnhub 与 Adanos 相关文件属于第 2 阶段范围，第一阶段不改编。
+此前计划参考的账户、自选股与 Adanos 相关文件属于第 2 阶段范围，第一阶段不改编。
 
 不复制 OpenStock 名称、标志与宣传素材作为本项目品牌。
 

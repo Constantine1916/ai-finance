@@ -11,13 +11,17 @@ context: |
     cycle quadrant and transparent signal rules, event calendar (1A);
     AI hardware industry cycle, filing-based fundamentals, cyclical stock view (1B).
   Users: a single owner on a private deployment; no public registration.
-  Data: daily or lower frequency; batch ingestion into time series storage;
-    traceable sources; explicit missing, pending-review and stale states;
-    no fabricated financial data; no composite scores or trading instructions.
-  Sources: FRED API, SEC EDGAR XBRL, a daily adjusted price provider,
-    TSMC monthly revenue, manual entries with mandatory source links.
-  Stack direction (pending review): Next.js App Router, TypeScript,
-    SQLite with Drizzle, ECharts, pm2 and cron on the owner's VPS.
+  Data: timeliness first; release-driven ingestion after official publication;
+    intraday snapshots marked provisional, confirmed by daily close;
+    traceable sources; explicit missing, pending-review, stale and provisional
+    states; no fabricated financial data; no composite scores or trading
+    instructions.
+  Sources: FRED API, US Treasury yield curve, BLS and BEA APIs, SEC EDGAR XBRL,
+    Finnhub quotes, a daily adjusted price provider, TSMC monthly revenue,
+    manual entries with mandatory source links.
+  Stack (confirmed): Next.js App Router, TypeScript, PostgreSQL with Drizzle,
+    ECharts, pm2 (web and worker) and cron on the owner's VPS behind Nginx,
+    served on finance.aicave.cn. The AI universe is editable in the UI.
 
 rules:
   proposal:

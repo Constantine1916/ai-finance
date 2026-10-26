@@ -26,6 +26,29 @@
 - **WHEN** 某个需要密钥的来源未配置密钥
 - **THEN** 该来源的任务不发出请求，相关序列显示未配置，其他来源照常采集
 
+### Requirement: Timeliness targets
+系统 SHALL 为每个序列登记时效目标：官方数据在预定发布时间后持续追加采集，直到取得新观测或达到配置的等待上限；美股交易时段内按配置间隔采集关注池与大盘 ETF 的盘中快照。页面 MUST 显示每个数值距今的时间。
+
+#### Scenario: CPI release
+- **WHEN** CPI 的官方发布时间到达
+- **THEN** 系统按配置间隔请求官方来源，取得新观测后停止追加；正常情况下发布后 15 分钟内页面可见
+
+#### Scenario: Release delayed
+- **WHEN** 达到等待上限仍没有新观测
+- **THEN** 系统停止追加，把相关序列标为延迟，并在日程中显示数据未到达
+
+#### Scenario: Intraday snapshot
+- **WHEN** 美股交易时段内页面显示某 ETF 的价格
+- **THEN** 价格标为盘中暂定，显示快照时间与供应商时间戳；盘中快照不写入日线历史，收盘后以复权收盘价为正式值
+
+#### Scenario: Earlier official source
+- **WHEN** 同一指标有比 FRED 更早发布的官方来源，例如财政部收益率曲线
+- **THEN** 系统先用更早的来源，FRED 到达后交叉核对，不一致时标为待确认
+
+#### Scenario: Request budget exceeded
+- **WHEN** 新的配置会让盘中快照的请求量超过供应商额度的安全上限
+- **THEN** 系统拒绝保存该配置并说明原因，不超额请求
+
 ### Requirement: Validation before display
 系统 SHALL 在数据入库后、展示前执行范围、跳变、连续性、单位与币种检查；未通过检查的观测 MUST 标为待确认，不能作为正常数据展示或参与信号计算。
 

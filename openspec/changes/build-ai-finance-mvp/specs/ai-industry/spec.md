@@ -7,9 +7,28 @@
 - **WHEN** 用户打开 AI 产业页面
 - **THEN** 页面按层列出证券及其 1 个月、3 个月、年初至今涨跌，相对 SOXX 与 SPY 的强弱，以及 200 日均线位置
 
-#### Scenario: Edit the universe
-- **WHEN** 用户新增一只证券但其代码无法在行情来源或 SEC 登记中找到
+### Requirement: Editable universe
+系统 SHALL 允许所有者在页面上随时新增、移除关注池证券，调整其所在层与周期强度分类，以及调整计入云厂商资本开支汇总的公司；每次修改 MUST 记录时间与修改前后的内容。
+
+#### Scenario: Add a security
+- **WHEN** 所有者新增一只能在 SEC 登记中找到的美国上市证券
+- **THEN** 系统开始采集其盘中快照、日线与申报数据，并补齐历史；补齐完成前相关字段显示采集中
+
+#### Scenario: Invalid symbol
+- **WHEN** 所有者新增的代码无法在行情来源或 SEC 登记中找到
 - **THEN** 系统拒绝添加并说明原因
+
+#### Scenario: Remove a security
+- **WHEN** 所有者移除一只证券
+- **THEN** 系统停止采集并从当前视图移除，已采集的历史数据保留，重新加入后可继续使用
+
+#### Scenario: Change aggregate membership
+- **WHEN** 所有者调整计入云厂商资本开支汇总的公司
+- **THEN** 合计按新成员重新计算，图表注明当前成员与变更时间
+
+#### Scenario: Review change history
+- **WHEN** 所有者查看关注池修改记录
+- **THEN** 页面按时间列出每次新增、移除与分类调整
 
 ### Requirement: Filing based fundamentals
 系统 SHALL 从 SEC 申报数据计算关注池公司的单季营收、营收同比、毛利率、营业利润率、存货、存货天数、资本开支与研发费用；每个数值 MUST 链接到对应申报文件。
