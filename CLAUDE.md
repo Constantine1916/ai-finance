@@ -22,8 +22,10 @@ npm run db:generate -- --name <名称>  # 修改 src/db/schema.ts 后生成迁�
 npm run dev                        # 开发服务器 http://127.0.0.1:3020
 npm run worker                     # 采集调度器（目前只写心跳）
 npm run typecheck && npm run lint && npm run test && npm run build   # 提交前四项检查
+npm run test:db                    # 真实 PostgreSQL 集成测试（重建 ai_finance_test 库）
+SMOKE_PASSWORD=<密码> npm run smoke:auth -- http://127.0.0.1:3020 normal   # 对 npm run start 后的服务做访问保护冒烟测试
 npm run check:secrets -- .next     # 扫描构建产物中是否出现 .env 里的密钥值
-npm run hash-password              # 生成 OWNER_PASSWORD_HASH
+npm run hash-password              # 生成 OWNER_PASSWORD_HASH（输出中 $ 已转义为 \$，Next.js 会展开 .env 里未转义的 $）
 ```
 
 运行配置放在仓库根目录 `.env`（权限 600，已被 .gitignore 排除），模板见 `.env.example`。密钥绝不提交。

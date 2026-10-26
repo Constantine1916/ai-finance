@@ -14,12 +14,14 @@
     "worker": "tsx --env-file-if-exists=.env src/worker/index.ts",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
-    "test": "vitest run",
+    "test": "vitest run --project unit",
     "db:up": "docker compose up -d db",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "tsx --env-file-if-exists=.env src/db/migrate.ts",
     "check:secrets": "tsx --env-file-if-exists=.env scripts/check-secrets.ts",
-    "hash-password": "tsx scripts/hash-password.ts"
+    "hash-password": "tsx scripts/hash-password.ts",
+    "test:db": "vitest run --project db",
+    "smoke:auth": "tsx scripts/smoke-auth.ts"
   },
   "dependencies": {
     "@node-rs/argon2": "2.2.2",

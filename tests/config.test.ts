@@ -63,3 +63,11 @@ describe("parseConfig", () => {
     expect(() => parseConfig({ ...base, TRUST_PROXY: "yes" })).toThrow(ConfigError);
   });
 });
+
+describe("password hash escaping", () => {
+  it("restores \\$ written in .env so Next.js does not expand it", () => {
+    const escaped = owner.OWNER_PASSWORD_HASH.replaceAll("$", "\\$");
+    const config = parseConfig({ ...base, ...owner, OWNER_PASSWORD_HASH: escaped });
+    expect(config.auth.configured && config.auth.passwordHash).toBe(owner.OWNER_PASSWORD_HASH);
+  });
+});

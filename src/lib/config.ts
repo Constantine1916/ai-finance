@@ -36,8 +36,9 @@ const envSchema = z.object({
   ),
   TRUST_PROXY: z.preprocess(blankToUndefined, z.enum(["true", "false"], { error: "TRUST_PROXY 只能是 true 或 false" }).default("false")),
   OWNER_USERNAME: optionalString,
+  // Next.js 会展开 .env 中的 $，因此哈希在 .env 里写成 \$，这里还原
   OWNER_PASSWORD_HASH: z.preprocess(
-    blankToUndefined,
+    (v) => blankToUndefined(typeof v === "string" ? v.replaceAll("\\$", "$") : v),
     z.string().startsWith("$argon2id$", "OWNER_PASSWORD_HASH 必须是 Argon2id 哈希").optional(),
   ),
   SESSION_SECRET: z.preprocess(blankToUndefined, z.string().min(32, "SESSION_SECRET 至少 32 个字符").optional()),
