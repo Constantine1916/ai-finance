@@ -30,6 +30,7 @@ export const series = pgTable("series", {
   jumpSigma: doublePrecision("jump_sigma"),
   releaseLagDays: integer("release_lag_days"),
   timelinessTargetMinutes: integer("timeliness_target_minutes"),
+  calendar: text("calendar"), // nyse | weekdays，用于检查日度序列缺口
   active: boolean("active").notNull().default(true),
   createdAt: createdAt(),
 });
@@ -40,9 +41,23 @@ export const observations = pgTable(
     seriesId: text("series_id").notNull().references(() => series.id),
     obsDate: date("obs_date").notNull(),
     value: doublePrecision("value").notNull(),
-    status: text("status").notNull().default("ok"), // ok | pending_review
     sourceRef: text("source_ref").notNull(),
     fetchedAt: timestamp("fetched_at", { withTimezone: true }).notNull(),
+  },
+  (t) => [primaryKey({ columns: [t.seriesId, t.obsDate] })],
+);
+
+// 未通过校验的观测单独存放，不覆盖已通过检查的值；确认后才并入 observations
+export const pendingObservations = pgTable(
+  "pending_observations",
+  {
+    seriesId: text("series_id").notNull().references(() => series.id),
+    obsDate: date("obs_date").notNull(),
+    value: doublePrecision("value").notNull(),
+    unit: text("unit").notNull(),
+    sourceRef: text("source_ref").notNull(),
+    fetchedAt: timestamp("fetched_at", { withTimezone: true }).notNull(),
+    issues: jsonb("issues").notNull(),
   },
   (t) => [primaryKey({ columns: [t.seriesId, t.obsDate] })],
 );

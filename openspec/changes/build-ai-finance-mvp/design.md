@@ -92,7 +92,8 @@ PostgreSQL 17 + Drizzle ORM 与迁移脚本。
 | 表 | 内容 |
 |---|---|
 | `series` | 序列定义：来源、来源代码、中文名、单位、频率、季调、类别、版权方、合理范围、跳变阈值、发布延迟、时效目标 |
-| `observations` | `series_id`、`obs_date`、`value`、`status`（正常、待确认）、`source_ref`、`fetched_at`；主键为序列加日期 |
+| `observations` | 通过校验的观测：`series_id`、`obs_date`、`value`、`source_ref`、`fetched_at`；主键为序列加日期 |
+| `pending_observations` | 未通过校验的观测及原因，单独存放，不覆盖已通过的值；确认后并入 `observations`，只因跳变待确认的值在下次采集得到相同结果时自动确认 |
 | `intraday_snapshots` | 代码、快照时间、价格、供应商时间戳；只保留最近若干交易日 |
 | `observation_revisions` | 被修订前的值、修订发现时间 |
 | `derived_values` | 派生指标结果、公式版本、输入状态 |

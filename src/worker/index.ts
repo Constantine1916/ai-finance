@@ -2,9 +2,11 @@ import { sql } from "drizzle-orm";
 import { getConfig } from "@/lib/config";
 import { closeDb, getDb } from "@/db/client";
 import { workerHeartbeat } from "@/db/schema";
+import { jobs } from "./jobs";
+import { tick } from "./loop";
 
-// 采集调度器入口。1A 后续任务在此注册采集任务；当前只写心跳，供 cron 检查存活。
-const HEARTBEAT_MS = 60_000;
+// 采集调度器：每分钟写心跳并运行到期任务。系统 cron 通过心跳判断 worker 是否存活。
+const TICK_MS = 60_000;
 
 async function beat() {
   await getDb()
@@ -13,9 +15,19 @@ async function beat() {
     .onConflictDoUpdate({ target: workerHeartbeat.id, set: { beatAt: sql`now()` } });
 }
 
+async function cycle() {
+  try {
+    await beat();
+    const started = await tick(getDb(), jobs);
+    if (started.length) console.log(`${new Date().toISOString()} 运行任务：${started.join("、")}`);
+  } catch (error) {
+    console.error("调度周期失败", error instanceof Error ? error.message : error);
+  }
+}
+
 getConfig();
-await beat();
-const timer = setInterval(() => void beat().catch((e) => console.error("心跳写入失败", e)), HEARTBEAT_MS);
+await cycle();
+const timer = setInterval(() => void cycle(), TICK_MS);
 
 const shutdown = async () => {
   clearInterval(timer);
@@ -24,4 +36,4 @@ const shutdown = async () => {
 };
 process.on("SIGINT", shutdown);
 process.on("SIGTERM", shutdown);
-console.log("worker 已启动");
+console.log(`worker 已启动，登记任务 ${jobs.length} 个`);
