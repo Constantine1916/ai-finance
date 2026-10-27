@@ -55,9 +55,9 @@
 
 ## 8. 1A 部署与验收
 
-- [ ] 8.1 用 acme.sh 为 `finance.aicave.cn` 签发证书（DNS 已解析），新增 Nginx 站点反向代理到 `web`；pm2 运行 `web` 与 `worker`；系统 cron 执行每日 `pg_dump` 与 worker 心跳检查；验证：外网 HTTPS 访问必须登录，现有 `aicave.cn` 站点不受影响，备份文件按时生成。
+- [x] 8.1 用 acme.sh 为 `finance.aicave.cn` 签发证书（DNS 已解析），新增 Nginx 站点反向代理到 `web`；pm2 运行 `web` 与 `worker`；系统 cron 执行每日 `pg_dump` 与 worker 心跳检查；验证：外网 HTTPS 访问必须登录，现有 `aicave.cn` 站点不受影响，备份文件按时生成。
 - [ ] 8.2 连续运行 7 天，覆盖至少一次 CPI 或非农发布日，记录采集成功率、各类数据的实际延迟、过期与待确认情况；验证：结果写入 `docs/verification.md`，并与 design.md 的时效目标对比。
-- [ ] 8.3 抽查至少 10 个数据点，与美国财政部、劳工统计局等官方页面比对；验证：比对结果写入 `docs/verification.md`，不一致项附原因。
+- [x] 8.3 抽查至少 10 个数据点，与美国财政部、劳工统计局等官方页面比对；验证：比对结果写入 `docs/verification.md`，不一致项附原因。
 
 ## 9. AI 产业数据（1B）
 

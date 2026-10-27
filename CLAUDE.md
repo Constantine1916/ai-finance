@@ -6,7 +6,7 @@
 
 ## 当前状态
 
-- 规格已于 2026-10-26 获用户批准，正在实现 1A。进度以 `openspec/changes/build-ai-finance-mvp/tasks.md` 的勾选情况为准。
+- 规格已于 2026-10-26 获用户批准。1A 于 2026-10-27 部署到 https://finance.aicave.cn（pm2：ai-finance-web、ai-finance-worker），部署细节见 README。进度以 `openspec/changes/build-ai-finance-mvp/tasks.md` 的勾选情况为准。
 - 第一阶段是个人使用的宏观与 AI 产业看板，旧的多用户四模块草案已被替换（见 git 历史）。
 - 修改规格时同时遵守 `openspec/config.yaml` 中的 `rules`。
 
@@ -26,7 +26,9 @@ npm run typecheck && npm run lint && npm run test && npm run build   # 提交前
 npm run test:db                    # 真实 PostgreSQL 集成测试（重建 ai_finance_test 库）
 SMOKE_PASSWORD=<密码> npm run smoke:auth -- http://127.0.0.1:3020 normal   # 对 npm run start 后的服务做访问保护冒烟测试
 npm run check:secrets -- .next     # 扫描构建产物中是否出现 .env 里的密钥值
-npm run hash-password              # 生成 OWNER_PASSWORD_HASH（输出中 $ 已转义为 \$，Next.js 会展开 .env 里未转义的 $）
+npm run hash-password              # 生成 OWNER_PASSWORD_HASH
+./deploy/deploy.sh                 # 在 VPS 上更新部署（会运行中的服务，属于对外操作，先征得用户同意）
+pm2 logs ai-finance-worker --lines 50 --nostream   # 查看采集日志（输出中 $ 已转义为 \$，Next.js 会展开 .env 里未转义的 $）
 ```
 
 运行配置放在仓库根目录 `.env`（权限 600，已被 .gitignore 排除），模板见 `.env.example`。密钥绝不提交。

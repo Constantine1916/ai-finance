@@ -2,7 +2,7 @@
 
 个人使用的美股宏观与 AI 产业周期看板。把宏观周期、流动性、市场宽度与 AI 硬件产业数据放在一处，每个数值都可追溯来源，辅助中长期的持有与仓位判断。
 
-**当前状态：规格已批准，正在实现 1A。目前只有应用骨架与数据库结构，还没有数据页面。**
+**当前状态：1A 已部署在 https://finance.aicave.cn（仅所有者登录），处于连续运行观察期；1B 未开始。**
 
 ## 第一阶段范围
 
@@ -50,6 +50,18 @@ npm run dev                        # http://127.0.0.1:3020
 ```
 
 提交前运行 `npm run typecheck && npm run lint && npm run test && npm run build`。
+
+## 部署（VPS）
+
+| 组件 | 方式 |
+| --- | --- |
+| 网站与采集进程 | pm2：`ai-finance-web`（127.0.0.1:3020）、`ai-finance-worker`，定义见 `deploy/ecosystem.config.cjs` |
+| 反向代理 | Nginx 站点 `deploy/nginx-finance.aicave.cn.conf`，安装为 `/etc/nginx/conf.d/ai-finance.conf` |
+| 证书 | acme.sh（阿里云 DNS 验证，ECC），安装到 `/etc/nginx/ssl/finance.aicave.cn/`，随 acme.sh 每日任务自动续期 |
+| 数据库 | Docker 容器 `ai-finance-postgres`（127.0.0.1:5434） |
+| 定时任务 | 系统 cron：每日 03:30 `deploy/backup.sh`（保留 14 份，`/root/backups/ai-finance/`）；每 5 分钟 `deploy/check-worker.sh`（心跳超过 5 分钟则重启 worker） |
+
+更新部署：`./deploy/deploy.sh`（拉取、安装、迁移前备份、迁移、构建、`pm2 reload`）。
 
 ## 开源与来源
 
