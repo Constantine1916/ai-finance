@@ -45,7 +45,7 @@ describe("release-day polling", () => {
 
   it("polls until the new observation arrives, then marks the event released", async () => {
     const scheduledAt = new Date("2026-11-12T13:30:00Z");
-    const [event] = await db.insert(events).values({ kind: "cpi", title: "CPI", scheduledAt, sourceUrl: "https://www.bls.gov/schedule/", seriesIds: ["bls:CPI"] }).returning();
+    const [event] = await db.insert(events).values({ key: `cpi:${scheduledAt.toISOString()}`, kind: "cpi", title: "CPI", scheduledAt, sourceUrl: "https://www.bls.gov/schedule/", seriesIds: ["bls:CPI"] }).returning();
     expect((await releaseEventsToPoll(db, rule, new Date("2026-11-12T13:29:00Z"), undefined)).length).toBe(0);
     expect((await releaseEventsToPoll(db, rule, new Date("2026-11-12T13:30:00Z"), undefined)).length).toBe(1);
 
@@ -59,7 +59,7 @@ describe("release-day polling", () => {
 
   it("marks the event delayed after the wait limit", async () => {
     const scheduledAt = new Date("2026-12-10T13:30:00Z");
-    const [event] = await db.insert(events).values({ kind: "cpi", title: "CPI", scheduledAt, sourceUrl: "https://www.bls.gov/schedule/", seriesIds: ["bls:CPI"] }).returning();
+    const [event] = await db.insert(events).values({ key: `cpi:${scheduledAt.toISOString()}`, kind: "cpi", title: "CPI", scheduledAt, sourceUrl: "https://www.bls.gov/schedule/", seriesIds: ["bls:CPI"] }).returning();
     await releaseEventsToPoll(db, rule, new Date("2026-12-10T14:31:00Z"), new Date("2026-12-10T14:29:00Z"));
     const [after] = await db.select().from(events).where(eq(events.id, event!.id));
     expect(after!.status).toBe("delayed");

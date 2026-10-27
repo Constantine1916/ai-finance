@@ -177,6 +177,8 @@ export const events = pgTable(
   "events",
   {
     id: serial("id").primaryKey(),
+    key: text("key").notNull().unique(), // 例如 cpi:2026-11-10、earnings:NVDA:2026-11-19，保证重复导入不产生重复事件
+    origin: text("origin").notNull().default("official"), // official（官方日程导入）| manual（人工录入）
     kind: text("kind").notNull(), // fomc | cpi | nfp | pce | claims | earnings
     title: text("title").notNull(),
     scheduledAt: timestamp("scheduled_at", { withTimezone: true }).notNull(),
@@ -184,6 +186,7 @@ export const events = pgTable(
     confirmed: boolean("confirmed").notNull().default(true),
     seriesIds: text("series_ids").array().notNull().default([]),
     status: text("status").notNull().default("scheduled"), // scheduled | released | delayed
+    note: text("note"), // 例如“时间按惯例 8:30 推算”
   },
   (t) => [index("events_scheduled_at").on(t.scheduledAt)],
 );

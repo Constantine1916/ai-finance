@@ -18,6 +18,7 @@ import type { ScheduledJob } from "@/worker/jobs";
 import { crossCheckTreasury } from "./cross-check";
 import { runDerive } from "./derive";
 import { evaluateAll, logStateChanges } from "@/signals/engine";
+import { syncCalendar } from "@/calendar/sync";
 
 const NO_KEY = { configured: true as const, credential: "" as const };
 
@@ -109,6 +110,15 @@ export const JOBS: ScheduledJob[] = [
       const changes = await logStateChanges(db, await evaluateAll(db, now));
       await db.insert(ingestRuns).values({ job: "signals", status: "success", finishedAt: new Date(), rowsWritten: changes.length });
       if (changes.length) console.log(`信号状态变化：${changes.join("；")}`);
+    },
+  },
+  {
+    id: "calendar",
+    trigger: { kind: "daily", easternTime: "06:00" },
+    async run(db, now) {
+      const { written, errors } = await syncCalendar(db, now);
+      console.log(`日程同步：${written} 个事件`);
+      if (errors.length) console.error(errors.join("\n"));
     },
   },
   {

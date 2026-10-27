@@ -15,6 +15,13 @@
       "when": 1793034599706,
       "tag": "0001_pending_observations",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1793082782964,
+      "tag": "0002_event_keys",
+      "breakpoints": true
     }
   ]
 }

@@ -1,7 +1,7 @@
 import Link from "next/link";
-import { and, asc, gte, lte } from "drizzle-orm";
 import { getDb } from "@/db/client";
-import { events } from "@/db/schema";
+import EventTable from "@/calendar/EventTable";
+import { eventsWithStatus } from "@/calendar/status";
 import QuadrantChart from "@/components/QuadrantChart";
 import { requireOwner } from "@/lib/auth/guard";
 import { sourceMeta } from "@/macro/build";
@@ -12,8 +12,6 @@ import { QUADRANT_FORMULA, quadrantTrail } from "@/signals/quadrant";
 
 export const dynamic = "force-dynamic";
 
-const bj = (d: Date) => new Intl.DateTimeFormat("zh-CN", { timeZone: "Asia/Shanghai", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hour12: false }).format(d);
-const et = (d: Date) => new Intl.DateTimeFormat("zh-CN", { timeZone: "America/New_York", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hour12: false }).format(d);
 
 export default async function Home() {
   await requireOwner();
@@ -25,7 +23,7 @@ export default async function Home() {
     readSeries(db, "fred:INDPRO"),
     readSeries(db, "fred:CPILFESL"),
     sourceMeta(db, ["fred:INDPRO", "fred:CPILFESL"], now),
-    db.select().from(events).where(and(gte(events.scheduledAt, now), lte(events.scheduledAt, new Date(now.getTime() + 30 * 86_400_000)))).orderBy(asc(events.scheduledAt)),
+    eventsWithStatus(db, new Date(now.getTime() - 2 * 86_400_000), new Date(now.getTime() + 30 * 86_400_000), now),
   ]);
   const trail = quadrantTrail(toPoints(industrial), toPoints(coreCpi));
   const latest = trail.at(-1);
@@ -108,25 +106,13 @@ export default async function Home() {
       </div>
 
       <section className="mt-4 rounded border border-[var(--border)] bg-[var(--panel)] p-3">
-        <h2 className="font-medium">未来 30 天</h2>
-        {upcoming.length === 0 ? (
-          <p className="mt-2 text-sm text-[var(--muted)]">暂无日程。</p>
-        ) : (
-          <table className="mt-2 w-full text-sm">
-            <tbody>
-              {upcoming.map((ev) => (
-                <tr key={ev.id} className="border-t border-[var(--border)]">
-                  <td className="num whitespace-nowrap px-2 py-1">北京 {bj(ev.scheduledAt)}</td>
-                  <td className="num whitespace-nowrap px-2 py-1 text-[var(--muted)]">美东 {et(ev.scheduledAt)}</td>
-                  <td className="px-2 py-1">
-                    {ev.title}
-                    {!ev.confirmed && <span className="ml-1 text-xs text-[var(--muted)]">（未确认）</span>}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
+        <h2 className="font-medium">
+          近期事件{" "}
+          <Link href="/calendar" className="text-xs font-normal text-[var(--muted)] underline">
+            完整日历
+          </Link>
+        </h2>
+        <EventTable rows={upcoming} />
       </section>
     </main>
   );

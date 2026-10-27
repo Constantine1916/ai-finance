@@ -81,3 +81,15 @@ OpenStock（2026-10-25 查看的提交 `855ca6a`）的数据来自 TradingView �
 - BLS 的 CPI、核心 CPI、非农、失业率与 FRED 对应序列在重叠的 20 个月中逐月一致；BEA 核心 PCE 与 FRED `PCEPILFE` 一致。
 - 由未复权收盘价、分红与拆股计算的复权价，与 Tiingo 自身复权价相比：平均相对误差 0.004%～0.06%，最大 0.09%（SPY、IWM、SOXX 在 2005～2008 年的个别日期）。
 - Finnhub 盘中快照尚未在交易时段实测（采集时美股已收盘）。
+
+## 发布日程（2026-10-27 核对）
+
+| 事件 | 来源 | 时间 |
+| --- | --- | --- |
+| FOMC 利率决议 | [美联储 FOMC 日历](https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm)网页解析，会议第二天 | 美东 14:00 |
+| PCE | [BEA 发布日历 ICS](https://www.bea.gov/news/schedule/ics/online-calendar-subscription.ics) 中的 “Personal Income and Outlays” | 以日历为准（通常 8:30，个别为 10:00） |
+| CPI、非农、初请失业金 | FRED 收录的官方发布日期（release 10、50、180） | 按惯例美东 8:30 |
+
+- BLS 网站对程序访问返回 403，因此 BLS 发布日期改取 FRED 收录的官方日程。FRED 目前收录到 2026 年 12 月，BLS 公布 2027 年日程后会随每日同步补上。
+- 首次同步 117 个事件；重复同步数量不变。PCE 日期在 BEA 日历与 FRED 中一致（2026-10-29、11-25、12-23）；初请失业金在感恩节当周为周三 11-25。
+- 重新同步时，同一类别中以后的、已不在官方日程里的事件视为改期并删除；人工录入的财报日期不受影响。解析失败时保留已有日程。
