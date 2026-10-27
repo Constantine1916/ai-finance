@@ -1,0 +1,14 @@
+# ai-finance 的 pm2 日志轮转：每天或超过 10 MB 时轮转，保留 7 份并压缩
+# 安装：复制到 /etc/logrotate.d/ai-finance（系统 logrotate 每天零点运行）
+/root/.pm2/logs/ai-finance-web-*.log /root/.pm2/logs/ai-finance-worker-*.log {
+    daily
+    maxsize 10M
+    rotate 7
+    compress
+    delaycompress
+    missingok
+    notifempty
+    # pm2 一直持有日志文件句柄，复制后清空原文件，进程无需重启
+    copytruncate
+    su root root
+}

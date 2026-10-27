@@ -200,3 +200,11 @@ Next.js 构建时提示安全升级。经 `npm audit` 核实，16.4.0 存在严�
 | 官方数据抽查（8.3） | 通过：11 个数据点（财政部 6 个期限 2026-10-22、BLS CPI / 核心 CPI / 非农 / 失业率 2026-09、BEA 核心 PCE 2026-08）与库中 FRED 序列全部一致 |
 
 未完成：8.2 连续运行 7 天（自 2026-10-27 起，需覆盖 11-06 非农或 11-10 CPI 发布日）；4.4 Finnhub 交易时段实测（worker 将在美股开盘后自动采集）。pm2 日志未配置轮转，worker 日志量小，后续视增长情况处理。
+
+## 2026-10-27：日志轮转与扫描请求拦截
+
+| 检查 | 状态 |
+| --- | --- |
+| pm2 日志轮转 | 通过：`/etc/logrotate.d/ai-finance` 用系统 logrotate（每日零点）轮转 ai-finance 的 pm2 日志，每天或超过 10 MB，保留 7 份压缩，`copytruncate` 无需重启进程；`logrotate -d` 检查与强制运行一次均正常，网站与 worker 持续在线 |
+| 扫描请求 | 部署后约 30 分钟内出现 React2Shell 等漏洞扫描（`Next-Action: r2s`），请求被登录检查重定向，未取得数据。Nginx 现对带 `Next-Action` 头的请求直接返回 403（应用不使用 Server Actions），实测 403；登录与看板访问正常，原站正常 |
+| 独立访问日志 | 通过：`/var/log/nginx/finance.access.log` 开始记录，属于系统 `/var/log/nginx/*.log` 轮转规则（保留 10 份） |
