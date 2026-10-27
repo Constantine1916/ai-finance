@@ -21,7 +21,8 @@
     "check:secrets": "tsx --env-file-if-exists=.env scripts/check-secrets.ts",
     "hash-password": "tsx scripts/hash-password.ts",
     "test:db": "vitest run --project db",
-    "smoke:auth": "tsx scripts/smoke-auth.ts"
+    "smoke:auth": "tsx scripts/smoke-auth.ts",
+    "job": "tsx --env-file-if-exists=.env scripts/run-job.ts"
   },
   "dependencies": {
     "@node-rs/argon2": "2.2.2",

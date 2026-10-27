@@ -11,7 +11,7 @@ afterAll(close);
 const def = (id: string): SeriesDef => ({ id, source: "fred", sourceKey: id, nameZh: id, unit: "Percent", frequency: "daily", category: "rates", validMin: 0, validMax: 20, jumpSigma: 6 });
 const obs = (obsDate: string, value: number, fetchedAt = new Date()) => ({ obsDate, value, unit: "Percent", sourceRef: "https://example.org/src", fetchedAt });
 
-const ids = ["t:trace", "t:idem", "t:range", "t:jump", "t:confirm"];
+const ids = ["t:trace", "t:idem", "t:range", "t:jump", "t:confirm", "t:backfill"];
 beforeAll(() => upsertSeries(db, ids.map(def)));
 
 describe("writeObservations", () => {
@@ -45,10 +45,17 @@ describe("writeObservations", () => {
     const history = Array.from({ length: 30 }, (_, i) => obs(`2026-08-${String(i + 1).padStart(2, "0")}`, 4 + (i % 2) * 0.02));
     await writeObservations(db, d, history);
     const first = new Date("2026-10-01T12:00:00Z");
-    expect(await writeObservations(db, d, [obs("2026-09-01", 6, first)])).toMatchObject({ pending: 1 });
-    expect(await writeObservations(db, d, [obs("2026-09-01", 6.1, new Date("2026-10-01T13:00:00Z"))])).toMatchObject({ pending: 1 });
-    expect(await writeObservations(db, d, [obs("2026-09-01", 6.1, new Date("2026-10-01T14:00:00Z"))])).toMatchObject({ inserted: 1, autoAccepted: 1 });
+    expect(await writeObservations(db, d, [obs("2026-09-25", 6, first)])).toMatchObject({ pending: 1 });
+    expect(await writeObservations(db, d, [obs("2026-09-25", 6.1, new Date("2026-10-01T13:00:00Z"))])).toMatchObject({ pending: 1 });
+    expect(await writeObservations(db, d, [obs("2026-09-25", 6.1, new Date("2026-10-01T14:00:00Z"))])).toMatchObject({ inserted: 1, autoAccepted: 1 });
     expect(await db.select().from(pendingObservations).where(eq(pendingObservations.seriesId, "t:jump"))).toEqual([]);
+  });
+
+  it("does not jump-check backfilled history, only recent observations", async () => {
+    const d = def("t:backfill");
+    const calm = Array.from({ length: 30 }, (_, i) => obs(`2008-08-${String(i + 1).padStart(2, "0")}`, 4 + (i % 2) * 0.02, new Date("2026-10-27T00:00:00Z")));
+    const crisis = obs("2008-09-15", 7, new Date("2026-10-27T00:00:00Z"));
+    expect(await writeObservations(db, d, [...calm, crisis])).toMatchObject({ inserted: 31, pending: 0 });
   });
 
   it("lets the owner confirm or discard pending values", async () => {

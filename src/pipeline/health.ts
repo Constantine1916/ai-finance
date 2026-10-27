@@ -53,8 +53,9 @@ export async function seriesFreshness(db: Db, now = new Date()) {
     .groupBy(series.id);
   const today = easternDate(now);
   return rows.map((r) => {
-    if (!r.lastObsDate) return { ...r, state: "empty" as const, expectedBy: null };
+    if (!r.lastObsDate) return { ...r, state: r.frequency === "irregular" ? ("fresh" as const) : ("empty" as const), expectedBy: null };
     const f = freshness(r.lastObsDate, r.frequency as Frequency, r.releaseLagDays ?? 0, today);
+    if (!f) return { ...r, state: "fresh" as const, expectedBy: null };
     return { ...r, state: f.stale ? ("stale" as const) : ("fresh" as const), expectedBy: f.expectedBy };
   });
 }

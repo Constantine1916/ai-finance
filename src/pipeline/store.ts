@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, lt } from "drizzle-orm";
+import { and, asc, desc, eq, gte, inArray, lt, lte } from "drizzle-orm";
 import { z } from "zod";
 import type { Db } from "@/db/types";
 import { observationRevisions, observations, pendingObservations, series } from "@/db/schema";
@@ -59,8 +59,8 @@ async function acceptedHistory(db: Db, seriesId: string, before: string): Promis
   return rows.reverse();
 }
 
-// 把通过检查的值写入正式表：新值插入，相同值不动，不同值记录修订
-async function accept(db: Db, seriesId: string, obs: ObservationInput): Promise<"inserted" | "unchanged" | "revised"> {
+// 单条写入正式表（确认待确认值时使用）：新值插入，相同值不动，不同值记录修订
+async function acceptOne(db: Db, seriesId: string, obs: ObservationInput): Promise<"inserted" | "unchanged" | "revised"> {
   const [existing] = await db
     .select()
     .from(observations)
@@ -84,6 +84,10 @@ async function accept(db: Db, seriesId: string, obs: ObservationInput): Promise<
   return "revised";
 }
 
+// 跳变检查只针对最近的观测：它用于拦截新采集到的错误值，历史回填中的真实剧烈波动（如 2008 年）不应进入待确认
+export const JUMP_CHECK_DAYS = 30;
+const CHUNK = 1000;
+
 export async function writeObservations(db: Db, def: SeriesDef, inputs: ObservationInput[]): Promise<WriteResult> {
   for (const input of inputs) {
     const check = traceable.safeParse(input);
@@ -92,36 +96,76 @@ export async function writeObservations(db: Db, def: SeriesDef, inputs: Observat
   const result: WriteResult = { inserted: 0, unchanged: 0, revised: 0, pending: 0, autoAccepted: 0 };
   const sorted = [...inputs].sort((a, b) => a.obsDate.localeCompare(b.obsDate));
   if (sorted.length === 0) return result;
+  const first = sorted[0]!.obsDate;
+  const last = sorted[sorted.length - 1]!.obsDate;
 
-  const history = await acceptedHistory(db, def.id, sorted[0]!.obsDate);
+  // 批量读取已有数据，在内存中比较，避免逐行查询
+  const inRange = and(eq(observations.seriesId, def.id), gte(observations.obsDate, first), lte(observations.obsDate, last));
+  const existing = new Map((await db.select().from(observations).where(inRange)).map((r) => [r.obsDate, r]));
+  const pendingRows = await db
+    .select()
+    .from(pendingObservations)
+    .where(and(eq(pendingObservations.seriesId, def.id), gte(pendingObservations.obsDate, first), lte(pendingObservations.obsDate, last)));
+  const pending = new Map(pendingRows.map((r) => [r.obsDate, r]));
+  const history = await acceptedHistory(db, def.id, first);
+
+  const inserts: (typeof observations.$inferInsert)[] = [];
+  const revisions: (typeof observationRevisions.$inferInsert)[] = [];
+  const updates: ObservationInput[] = [];
+  const pendingUpserts: (typeof pendingObservations.$inferInsert)[] = [];
+  const pendingDeletes: string[] = [];
+
+  const accept = (obs: ObservationInput) => {
+    const prior = existing.get(obs.obsDate);
+    if (pending.has(obs.obsDate)) pendingDeletes.push(obs.obsDate);
+    if (!prior) {
+      inserts.push({ seriesId: def.id, obsDate: obs.obsDate, value: obs.value, sourceRef: obs.sourceRef, fetchedAt: obs.fetchedAt });
+      result.inserted++;
+    } else if (sameValue(prior.value, obs.value)) {
+      result.unchanged++;
+    } else {
+      revisions.push({ seriesId: def.id, obsDate: obs.obsDate, previousValue: prior.value, previousFetchedAt: prior.fetchedAt });
+      updates.push(obs);
+      result.revised++;
+    }
+    history.push({ obsDate: obs.obsDate, value: obs.value });
+  };
+
   for (const obs of sorted) {
-    const verdict: ValidationResult = validateObservation(def, obs, history);
+    const recent = obs.fetchedAt.getTime() - Date.parse(obs.obsDate) <= JUMP_CHECK_DAYS * 86_400_000;
+    const verdict: ValidationResult = validateObservation(recent ? def : { ...def, jumpSigma: undefined }, obs, history);
     if (verdict.ok) {
-      result[await accept(db, def.id, obs)]++;
-      history.push({ obsDate: obs.obsDate, value: obs.value });
+      accept(obs);
       continue;
     }
-
     // 只因跳变而待确认的值，若之后再次采集得到相同结果，视为确认
-    const [pending] = await db
-      .select()
-      .from(pendingObservations)
-      .where(and(eq(pendingObservations.seriesId, def.id), eq(pendingObservations.obsDate, obs.obsDate)));
+    const held = pending.get(obs.obsDate);
     const onlyJump = verdict.issues.every((i) => i.code === "abnormal_jump");
-    if (pending && onlyJump && sameValue(pending.value, obs.value) && pending.fetchedAt < obs.fetchedAt) {
-      result[await accept(db, def.id, obs)]++;
+    if (held && onlyJump && sameValue(held.value, obs.value) && held.fetchedAt < obs.fetchedAt) {
+      accept(obs);
       result.autoAccepted++;
-      history.push({ obsDate: obs.obsDate, value: obs.value });
       continue;
     }
-
-    const row = { seriesId: def.id, obsDate: obs.obsDate, value: obs.value, unit: obs.unit, sourceRef: obs.sourceRef, fetchedAt: obs.fetchedAt, issues: verdict.issues };
-    await db
-      .insert(pendingObservations)
-      .values(row)
-      .onConflictDoUpdate({ target: [pendingObservations.seriesId, pendingObservations.obsDate], set: row });
+    pendingUpserts.push({ seriesId: def.id, obsDate: obs.obsDate, value: obs.value, unit: obs.unit, sourceRef: obs.sourceRef, fetchedAt: obs.fetchedAt, issues: verdict.issues });
     result.pending++;
   }
+
+  await db.transaction(async (tx) => {
+    for (let i = 0; i < inserts.length; i += CHUNK) await tx.insert(observations).values(inserts.slice(i, i + CHUNK));
+    for (let i = 0; i < revisions.length; i += CHUNK) await tx.insert(observationRevisions).values(revisions.slice(i, i + CHUNK));
+    for (const obs of updates) {
+      await tx
+        .update(observations)
+        .set({ value: obs.value, sourceRef: obs.sourceRef, fetchedAt: obs.fetchedAt })
+        .where(and(eq(observations.seriesId, def.id), eq(observations.obsDate, obs.obsDate)));
+    }
+    if (pendingDeletes.length) {
+      await tx.delete(pendingObservations).where(and(eq(pendingObservations.seriesId, def.id), inArray(pendingObservations.obsDate, pendingDeletes)));
+    }
+    for (const row of pendingUpserts) {
+      await tx.insert(pendingObservations).values(row).onConflictDoUpdate({ target: [pendingObservations.seriesId, pendingObservations.obsDate], set: row });
+    }
+  });
   return result;
 }
 
@@ -132,7 +176,7 @@ export async function confirmPending(db: Db, seriesId: string, obsDate: string) 
     .from(pendingObservations)
     .where(and(eq(pendingObservations.seriesId, seriesId), eq(pendingObservations.obsDate, obsDate)));
   if (!pending) return false;
-  await accept(db, seriesId, { obsDate, value: pending.value, unit: pending.unit, sourceRef: pending.sourceRef, fetchedAt: pending.fetchedAt });
+  await acceptOne(db, seriesId, { obsDate, value: pending.value, unit: pending.unit, sourceRef: pending.sourceRef, fetchedAt: pending.fetchedAt });
   return true;
 }
 

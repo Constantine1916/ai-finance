@@ -4,6 +4,7 @@ const USD_SCALE: Record<string, number> = {
   "Thousands of U.S. Dollars": 1e3,
   "Millions of U.S. Dollars": 1e6,
   "Billions of U.S. Dollars": 1e9,
+  "Billions of US Dollars": 1e9, // FRED 的 RRPONTSYD 用这种写法
   "Trillions of U.S. Dollars": 1e12,
 };
 

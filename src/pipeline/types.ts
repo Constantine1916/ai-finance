@@ -1,6 +1,7 @@
 // 数据管道的公共类型
 
-export type Frequency = "daily" | "weekly" | "monthly" | "quarterly" | "annual";
+// irregular：只在事件发生时有值（分红、拆股），不做过期判断
+export type Frequency = "daily" | "weekly" | "monthly" | "quarterly" | "annual" | "irregular";
 export type TradingCalendar = "nyse" | "weekdays" | "none";
 
 export interface SeriesDef {

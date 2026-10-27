@@ -20,7 +20,8 @@ npm run db:up                      # 启动 PostgreSQL 容器（127.0.0.1:5434�
 npm run db:migrate                 # 应用 drizzle/ 中的迁移
 npm run db:generate -- --name <名称>  # 修改 src/db/schema.ts 后生成迁移
 npm run dev                        # 开发服务器 http://127.0.0.1:3020
-npm run worker                     # 采集调度器（目前只写心跳）
+npm run worker                     # 采集调度器：每分钟写心跳并运行到期任务
+npm run job -- fred tiingo derive   # 手动运行指定采集任务（不带参数时列出全部任务）
 npm run typecheck && npm run lint && npm run test && npm run build   # 提交前四项检查
 npm run test:db                    # 真实 PostgreSQL 集成测试（重建 ai_finance_test 库）
 SMOKE_PASSWORD=<密码> npm run smoke:auth -- http://127.0.0.1:3020 normal   # 对 npm run start 后的服务做访问保护冒烟测试

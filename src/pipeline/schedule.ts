@@ -5,7 +5,8 @@ import { easternMinutes, isMarketOpen, isTradingDay, easternDate } from "./calen
 export type Trigger =
   | { kind: "daily"; easternTime: string; tradingDaysOnly?: boolean } // 每天在美东某时刻之后运行一次
   | { kind: "interval"; minutes: number } // 固定间隔
-  | { kind: "market-hours"; minutes: number }; // 只在美股交易时段内按间隔运行
+  | { kind: "market-hours"; minutes: number } // 只在美股交易时段内按间隔运行
+  | { kind: "window"; start: string; end: string; minutes: number; tradingDaysOnly?: boolean }; // 美东某时段内按间隔运行
 
 function toMinutes(hhmm: string) {
   const [h, m] = hhmm.split(":").map(Number) as [number, number];
@@ -18,6 +19,12 @@ export function isDue(trigger: Trigger, now: Date, lastRun: Date | undefined): b
       return !lastRun || now.getTime() - lastRun.getTime() >= trigger.minutes * 60_000;
     case "market-hours":
       return isMarketOpen(now) && (!lastRun || now.getTime() - lastRun.getTime() >= trigger.minutes * 60_000);
+    case "window": {
+      if (trigger.tradingDaysOnly && !isTradingDay(easternDate(now))) return false;
+      const m = easternMinutes(now);
+      if (m < toMinutes(trigger.start) || m >= toMinutes(trigger.end)) return false;
+      return !lastRun || now.getTime() - lastRun.getTime() >= trigger.minutes * 60_000;
+    }
     case "daily": {
       const today = easternDate(now);
       if (trigger.tradingDaysOnly && !isTradingDay(today)) return false;
