@@ -114,4 +114,3 @@ export const JOBS: ScheduledJob[] = [
 export async function registerSeries(db: Db) {
   await upsertSeries(db, ALL_SERIES);
 }
-

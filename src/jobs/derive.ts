@@ -79,4 +79,3 @@ export async function runDerive(db: Db) {
     .where(eq(ingestRuns.id, run!.id));
   return { written, errors };
 }
-
