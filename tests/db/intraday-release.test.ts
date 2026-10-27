@@ -4,17 +4,21 @@ import { events, observations } from "@/db/schema";
 import { latestPrice, storeSnapshots } from "@/pipeline/intraday";
 import { upsertSeries, writeObservations } from "@/pipeline/store";
 import { releaseEventsToPoll } from "@/worker/release";
-import { testDb } from "./helpers";
+import { clearSymbol, testDb } from "./helpers";
 
 const { db, close } = testDb();
-afterAll(close);
+afterAll(async () => {
+  await clearSymbol(db, "SPY");
+  await close();
+});
 
-beforeAll(() =>
-  upsertSeries(db, [
+beforeAll(async () => {
+  await clearSymbol(db, "SPY");
+  await upsertSeries(db, [
     { id: "tiingo:SPY", source: "tiingo", sourceKey: "SPY", nameZh: "SPY 复权收盘", unit: "USD", frequency: "daily", category: "market" },
     { id: "bls:CPI", source: "bls", sourceKey: "CUUR0000SA0L1E", nameZh: "核心 CPI", unit: "Index", frequency: "monthly", category: "inflation" },
-  ]),
-);
+  ]);
+});
 
 describe("intraday snapshots", () => {
   const open = new Date("2026-10-26T15:00:00Z"); // 11:00 EDT

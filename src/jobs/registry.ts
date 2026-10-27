@@ -17,6 +17,7 @@ import { treasuryAdapter } from "@/sources/treasury";
 import type { ScheduledJob } from "@/worker/jobs";
 import { crossCheckTreasury } from "./cross-check";
 import { runDerive } from "./derive";
+import { evaluateAll, logStateChanges } from "@/signals/engine";
 
 const NO_KEY = { configured: true as const, credential: "" as const };
 
@@ -99,6 +100,15 @@ export const JOBS: ScheduledJob[] = [
     async run(db) {
       const { errors } = await runDerive(db);
       if (errors.length) console.error(errors.join("\n"));
+    },
+  },
+  {
+    id: "signals",
+    trigger: { kind: "interval", minutes: 60 },
+    async run(db, now) {
+      const changes = await logStateChanges(db, await evaluateAll(db, now));
+      await db.insert(ingestRuns).values({ job: "signals", status: "success", finishedAt: new Date(), rowsWritten: changes.length });
+      if (changes.length) console.log(`信号状态变化：${changes.join("；")}`);
     },
   },
   {

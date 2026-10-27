@@ -8,3 +8,12 @@ export function testDb() {
   const pool = new Pool({ connectionString: url, max: 2 });
   return { db: drizzle(pool, { schema }), close: () => pool.end() };
 }
+
+// 清理某个代码的价格相关数据，避免不同测试文件共用 SPY 等代码时互相影响
+export async function clearSymbol(db: ReturnType<typeof testDb>["db"], symbol: string) {
+  const { derivedValues, intradaySnapshots, observations } = await import("@/db/schema");
+  const { eq, inArray } = await import("drizzle-orm");
+  await db.delete(intradaySnapshots).where(eq(intradaySnapshots.symbol, symbol));
+  await db.delete(observations).where(inArray(observations.seriesId, [`tiingo:${symbol}:close`, `tiingo:${symbol}:div`, `tiingo:${symbol}:split`]));
+  await db.delete(derivedValues).where(inArray(derivedValues.derivedId, [`adj:${symbol}`, `sma200:${symbol}`, `dd52w:${symbol}`]));
+}
