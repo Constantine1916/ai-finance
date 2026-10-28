@@ -1,7 +1,7 @@
 import { addDays, nextTradingDay } from "./calendar";
 import type { Frequency } from "./types";
 
-// 下一期数据所属期间的期末日期。FRED 月度序列的日期是当月 1 日，季度是季初。
+// 下一期数据所属期间的期末日期。月度序列的日期是当月 1 日（FRED 惯例）；季度与年度序列的日期是期末（SEC 财报口径）。
 function nextPeriodEnd(lastObsDate: string, frequency: Exclude<Frequency, "irregular">): string {
   const [y, m] = [Number(lastObsDate.slice(0, 4)), Number(lastObsDate.slice(5, 7))];
   const monthEnd = (year: number, month: number) => new Date(Date.UTC(year, month, 0)).toISOString().slice(0, 10);
@@ -13,9 +13,9 @@ function nextPeriodEnd(lastObsDate: string, frequency: Exclude<Frequency, "irreg
     case "monthly":
       return monthEnd(y, m + 1);
     case "quarterly":
-      return monthEnd(y, m + 5);
+      return monthEnd(y, m + 3);
     case "annual":
-      return monthEnd(y + 1, 12);
+      return monthEnd(y + 1, m);
   }
 }
 

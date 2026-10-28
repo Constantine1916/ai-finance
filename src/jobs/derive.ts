@@ -6,15 +6,24 @@ import { alignAsOf, drawdown, FORMULA_VERSION, ratio, sma, type Point } from "@/
 import { readSeries } from "@/pipeline/store";
 import { convertUsd } from "@/pipeline/units";
 import { MARKET_ETFS } from "@/sources/catalog";
+import { aggregateByCalendarQuarter, quarterEndDate, threeMonthYoY, valuationSeries } from "@/ai/metrics";
+import { activeMembers } from "@/ai/universe";
+import { edgarSeriesId } from "./edgar";
 
 const CHUNK = 1000;
 
-export async function saveDerived(db: Db, derivedId: string, points: Point[]) {
+// status：可选的逐点状态（例如亏损时市盈率为空且状态为 loss），默认按是否有值判断
+export async function saveDerived(db: Db, derivedId: string, points: (Point & { status?: string })[]) {
   await db.transaction(async (tx) => {
     await tx.delete(derivedValues).where(eq(derivedValues.derivedId, derivedId));
-    const rows = points.map((p) => ({ derivedId, obsDate: p.date, value: p.value, formulaVersion: FORMULA_VERSION, inputStatus: p.value === null ? "missing" : "ok" }));
+    const rows = points.map((p) => ({ derivedId, obsDate: p.date, value: p.value, formulaVersion: FORMULA_VERSION, inputStatus: p.status ?? (p.value === null ? "missing" : "ok") }));
     for (let i = 0; i < rows.length; i += CHUNK) await tx.insert(derivedValues).values(rows.slice(i, i + CHUNK));
   });
+}
+
+export async function readDerivedWithStatus(db: Db, derivedId: string) {
+  const rows = await db.select().from(derivedValues).where(eq(derivedValues.derivedId, derivedId)).orderBy(derivedValues.obsDate);
+  return rows.map((r) => ({ date: r.obsDate, value: r.value, status: r.inputStatus }));
 }
 
 export async function readDerived(db: Db, derivedId: string): Promise<Point[]> {
@@ -49,7 +58,8 @@ export async function runDerive(db: Db) {
   };
   const adj = new Map<string, Point[]>();
 
-  for (const t of MARKET_ETFS) {
+  const members = await activeMembers(db);
+  for (const t of [...MARKET_ETFS, ...members.map((m) => m.symbol)]) {
     try {
       const points = adjustedClose(await readSeries(db, `tiingo:${t}:close`), await readSeries(db, `tiingo:${t}:div`), await readSeries(db, `tiingo:${t}:split`));
       if (points.length === 0) continue;
@@ -72,6 +82,35 @@ export async function runDerive(db: Db) {
     errors.push(`净流动性：${error instanceof Error ? error.message : String(error)}`);
   }
   await save("ratio:VIX/VIX3M", ratio(asPoints(await readSeries(db, "fred:VIXCLS")), asPoints(await readSeries(db, "fred:VXVCLS"))));
+
+  // 1B：云厂商资本开支合计（只保留完整季度）、台积电 3 个月平均同比、个股估值（周度）
+  try {
+    const hyperscalers = members.filter((m) => m.inHyperscalerCapex);
+    const capex = aggregateByCalendarQuarter(Object.fromEntries(await Promise.all(hyperscalers.map(async (m) => [m.symbol, await readSeries(db, edgarSeriesId(m.symbol, "capex"))] as const))));
+    const complete = capex.filter((q) => q.total !== null);
+    await save("capex:hyperscalers", complete.map((q) => ({ date: quarterEndDate(q.cq), value: q.total })));
+    await save("capex:hyperscalers:yoy", complete.map((q) => ({ date: quarterEndDate(q.cq), value: q.yoy })));
+    await save("tsmc:revenue:3m-yoy", threeMonthYoY(await readSeries(db, "tsmc:revenue")));
+  } catch (error) {
+    errors.push(`AI 产业汇总：${error instanceof Error ? error.message : String(error)}`);
+  }
+  for (const m of members) {
+    try {
+      const v = valuationSeries({
+        closes: await readSeries(db, `tiingo:${m.symbol}:close`),
+        splits: await readSeries(db, `tiingo:${m.symbol}:split`),
+        netIncome: await readSeries(db, edgarSeriesId(m.symbol, "netIncome")),
+        shares: await readSeries(db, edgarSeriesId(m.symbol, "dilutedShares")),
+        equity: await readSeries(db, edgarSeriesId(m.symbol, "equity")),
+      });
+      if (v.length === 0) continue;
+      await saveDerived(db, `pe:${m.symbol}`, v.map((x) => ({ date: x.date, value: x.pe, status: x.peStatus })));
+      await saveDerived(db, `pb:${m.symbol}`, v.map((x) => ({ date: x.date, value: x.pb, status: x.pbStatus })));
+      written += v.length * 2;
+    } catch (error) {
+      errors.push(`${m.symbol} 估值：${error instanceof Error ? error.message : String(error)}`);
+    }
+  }
 
   await db
     .update(ingestRuns)

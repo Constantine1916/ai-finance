@@ -77,6 +77,19 @@ describe("threshold rules", () => {
   });
 });
 
+describe("1B rules", () => {
+  it("capex: watch after one slower quarter, warning after two", () => {
+    const q = (vals: number[]) => vals.map((value, i) => ({ date: `202${i}-03-31`, value }));
+    expect(run("capex-slowdown", { yoy: q([40, 60, 55]) }).at(-1)!.state).toBe("watch");
+    expect(run("capex-slowdown", { yoy: q([40, 60, 55, 45]) }).at(-1)!.state).toBe("warning");
+    expect(run("capex-slowdown", { yoy: q([40, 60, 55, 70]) }).at(-1)!.state).toBe("normal");
+  });
+
+  it("TSMC: three-month YoY below thresholds", () => {
+    expect(states(run("tsmc-revenue", { yoy: daily([-2, 5, 30]) }))).toEqual(["warning", "watch", "normal"]);
+  });
+});
+
 describe("triggers and track record", () => {
   it("counts entries into warning with a cooldown", () => {
     const s = (date: string, state: DailyState["state"]): DailyState => ({ date, value: 0, state });

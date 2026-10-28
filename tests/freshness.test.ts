@@ -17,6 +17,13 @@ describe("freshness", () => {
     expect(freshness("2026-10-23", "daily", 1, "2026-10-30")?.stale).toBe(true);
   });
 
+  it("treats quarterly and annual dates as period ends (SEC filings)", () => {
+    // 2026-07-26 结束的财季，下一季按 10 月底计，加 45 天发布延迟与 7 天宽限，最晚 12-22
+    expect(freshness("2026-07-26", "quarterly", 45, "2026-12-22")?.stale).toBe(false);
+    expect(freshness("2026-07-26", "quarterly", 45, "2026-12-23")?.stale).toBe(true);
+    expect(freshness("2024-12-31", "annual", 120, "2026-05-14")?.stale).toBe(false);
+  });
+
   it("never marks irregular event series stale", () => {
     expect(freshness("2020-01-01", "irregular", 0, "2026-10-27")).toBeNull();
   });

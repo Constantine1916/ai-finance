@@ -118,4 +118,28 @@ export function tiingoSeries(ticker: string): SeriesDef[] {
 
 export const TIINGO_SERIES: SeriesDef[] = MARKET_ETFS.flatMap(tiingoSeries);
 
-export const ALL_SERIES: SeriesDef[] = [...FRED_SERIES, ...TREASURY_SERIES, ...BLS_SERIES, ...BEA_SERIES, ...TIINGO_SERIES];
+// 1B 人工录入序列：没有可用接口的数据，录入时来源链接必填
+const manual = (id: string, nameZh: string, unit: string, frequency: SeriesDef["frequency"], category: string, releaseLagDays: number, extra: Partial<SeriesDef> = {}): SeriesDef => ({
+  id: `manual:${id}`,
+  source: "manual",
+  sourceKey: id,
+  nameZh,
+  unit,
+  frequency,
+  category,
+  releaseLagDays,
+  ...extra,
+});
+
+export const MANUAL_SERIES: SeriesDef[] = [
+  manual("kr-semis-exports", "韩国半导体出口（全月）", "Billions of U.S. Dollars", "monthly", "ai-supply", 1, { validMin: 0, validMax: 200 }),
+  manual("kr-semis-exports-20d", "韩国半导体出口（当月前 20 天）", "Billions of U.S. Dollars", "monthly", "ai-supply", -9, { validMin: 0, validMax: 200 }),
+  manual("dram-contract", "DRAM 合约价（DDR5 16Gb）", "USD", "monthly", "memory", 5, { validMin: 0, validMax: 1000 }),
+  manual("dram-spot", "DRAM 现货价（DDR5 16Gb）", "USD", "weekly", "memory", 3, { validMin: 0, validMax: 1000 }),
+  manual("capex-guide-MU", "美光当财年资本开支指引", "Billions of U.S. Dollars", "quarterly", "memory", 30, { validMin: 0, validMax: 200 }),
+  manual("cloud-growth-AZURE", "Azure 收入同比增速", "Percent", "quarterly", "ai-demand", 40, { validMin: -50, validMax: 300 }),
+  manual("cloud-growth-GCP", "谷歌云收入同比增速", "Percent", "quarterly", "ai-demand", 40, { validMin: -50, validMax: 300 }),
+  manual("cloud-growth-AWS", "AWS 收入同比增速", "Percent", "quarterly", "ai-demand", 40, { validMin: -50, validMax: 300 }),
+];
+
+export const ALL_SERIES: SeriesDef[] = [...FRED_SERIES, ...TREASURY_SERIES, ...BLS_SERIES, ...BEA_SERIES, ...TIINGO_SERIES, ...MANUAL_SERIES];

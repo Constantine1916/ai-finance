@@ -9,7 +9,11 @@ import { upsertSeries } from "@/pipeline/store";
 import type { SeriesDef } from "@/pipeline/types";
 import { beaAdapter } from "@/sources/bea";
 import { blsAdapter } from "@/sources/bls";
-import { ALL_SERIES, BEA_SERIES, BLS_SERIES, FRED_SERIES, MARKET_ETFS, TIINGO_SERIES, TREASURY_SERIES } from "@/sources/catalog";
+import { ALL_SERIES, BEA_SERIES, BLS_SERIES, FRED_SERIES, MARKET_ETFS, TREASURY_SERIES, tiingoSeries } from "@/sources/catalog";
+import { activeMembers, ensureDefaultUniverse } from "@/ai/universe";
+import { fetchTickerDirectory } from "@/sources/edgar";
+import { runEdgar } from "./edgar";
+import { runTsmc } from "./tsmc";
 import { FINNHUB_LIMIT_PER_MINUTE, fetchQuotes } from "@/sources/finnhub";
 import { fredAdapter } from "@/sources/fred";
 import { tiingoAdapter } from "@/sources/tiingo";
@@ -35,8 +39,14 @@ function ingest(id: string, series: SeriesDef[], adapter: (db: Db) => Adapter, p
   };
 }
 
-export const INTRADAY_SYMBOLS: readonly string[] = MARKET_ETFS;
-const INTRADAY_INTERVAL = 5;
+export const INTRADAY_INTERVAL = 5;
+
+// 日线与盘中快照覆盖大盘 ETF 与当前关注池
+async function marketSymbols(db: Db) {
+  return [...new Set([...MARKET_ETFS, ...(await activeMembers(db)).map((m) => m.symbol)])];
+}
+
+export const checkUniverseBudget = (memberCount: number) => checkIntradayBudget(MARKET_ETFS.length + memberCount, INTRADAY_INTERVAL, FINNHUB_LIMIT_PER_MINUTE);
 
 async function intraday(db: Db) {
   const provider = getConfig().providers.finnhub;
@@ -44,13 +54,14 @@ async function intraday(db: Db) {
     await db.insert(ingestRuns).values({ job: "finnhub:intraday", status: "skipped", finishedAt: new Date(), error: provider.reason });
     return;
   }
-  const budget = checkIntradayBudget(INTRADAY_SYMBOLS.length, INTRADAY_INTERVAL, FINNHUB_LIMIT_PER_MINUTE);
+  const symbols = await marketSymbols(db);
+  const budget = checkIntradayBudget(symbols.length, INTRADAY_INTERVAL, FINNHUB_LIMIT_PER_MINUTE);
   if (!budget.ok) {
     await db.insert(ingestRuns).values({ job: "finnhub:intraday", status: "failed", finishedAt: new Date(), error: budget.message });
     return;
   }
   const [run] = await db.insert(ingestRuns).values({ job: "finnhub:intraday", status: "running" }).returning({ id: ingestRuns.id });
-  const { snapshots, errors } = await fetchQuotes([...INTRADAY_SYMBOLS], provider.credential, AbortSignal.timeout(60_000));
+  const { snapshots, errors } = await fetchQuotes(symbols, provider.credential, AbortSignal.timeout(120_000));
   await storeSnapshots(db, snapshots);
   await db
     .update(ingestRuns)
@@ -80,7 +91,11 @@ export const JOBS: ScheduledJob[] = [
   {
     id: "tiingo",
     trigger: { kind: "window", start: "18:30", end: "23:30", minutes: 60, tradingDaysOnly: true },
-    run: ingest("tiingo", TIINGO_SERIES, (db) => tiingoAdapter({ lastObsDate: lastObsDate(db) }), () => providers().tiingo),
+    async run(db) {
+      const series = (await marketSymbols(db)).flatMap(tiingoSeries);
+      await upsertSeries(db, series);
+      await ingest("tiingo", series, (d) => tiingoAdapter({ lastObsDate: lastObsDate(d) }), () => providers().tiingo)(db);
+    },
   },
   {
     id: "bls",
@@ -113,6 +128,29 @@ export const JOBS: ScheduledJob[] = [
     },
   },
   {
+    id: "edgar",
+    trigger: { kind: "interval", minutes: 60 },
+    run: (db) => edgarRun(db, "edgar"),
+  },
+  {
+    // 财报多在美东收盘后发布：16:00–20:00 每 10 分钟检查新申报
+    id: "edgar:earnings-window",
+    trigger: { kind: "window", start: "16:00", end: "20:00", minutes: 10, tradingDaysOnly: true },
+    run: (db) => edgarRun(db, "edgar:earnings-window"),
+  },
+  {
+    // 台积电约每月 10 日报送上月营收 6-K
+    id: "tsmc",
+    trigger: { kind: "interval", minutes: 60 },
+    async run(db) {
+      const ua = providers().edgar;
+      if (!ua.configured) return void (await db.insert(ingestRuns).values({ job: "tsmc", status: "skipped", finishedAt: new Date(), error: ua.reason }));
+      const r = await runTsmc(db, ua.credential);
+      if (r.processed) console.log(`台积电月营收：处理 ${r.processed} 份报告`);
+      if (r.errors.length) console.error(r.errors.join("\n"));
+    },
+  },
+  {
     id: "calendar",
     trigger: { kind: "daily", easternTime: "06:00" },
     async run(db, now) {
@@ -131,6 +169,25 @@ export const JOBS: ScheduledJob[] = [
   },
 ];
 
+async function edgarRun(db: Db, jobId: string) {
+  const ua = providers().edgar;
+  if (!ua.configured) return void (await db.insert(ingestRuns).values({ job: jobId, status: "skipped", finishedAt: new Date(), error: ua.reason }));
+  const r = await runEdgar(db, ua.credential, jobId);
+  if (r.written) console.log(`${jobId}：写入 ${r.written} 条财报数据`);
+  if (r.errors.length) console.error(r.errors.join("\n"));
+}
+
+let directory: Awaited<ReturnType<typeof fetchTickerDirectory>> | undefined;
+
+// 用 SEC 的代码表查找公司编号；进程内缓存，避免重复下载
+export async function secLookup(symbol: string) {
+  const ua = getConfig().providers.edgar;
+  if (!ua.configured) throw new Error(ua.reason);
+  directory ??= await fetchTickerDirectory(ua.credential, AbortSignal.timeout(60_000));
+  return directory.get(symbol.toUpperCase());
+}
+
 export async function registerSeries(db: Db) {
   await upsertSeries(db, ALL_SERIES);
+  if (getConfig().providers.edgar.configured) await ensureDefaultUniverse(db, secLookup);
 }

@@ -101,7 +101,6 @@ export default async function Home() {
               </tbody>
             </table>
           </div>
-          <p className="mt-2 text-xs text-[var(--muted)]">云厂商资本开支与台积电月营收两条规则在 1B 阶段接入数据后加入。</p>
         </section>
       </div>
 

@@ -226,6 +226,42 @@ export const RULES: RuleDef[] = [
     describe: (p) => ({ warning: `10 年期实际利率 3 个月（63 个交易日）内上升超过 ${p.warning} 个百分点`, watch: `上升超过 ${p.watch} 个百分点` }),
     evaluate: (data, p) => changeOver(data.real ?? [], 63).map((x) => ({ date: x.date, value: x.change, state: level(x.change, p.warning!, p.watch!) })),
   },
+  {
+    id: "capex-slowdown",
+    name: "云厂商资本开支增速放缓",
+    version: 1,
+    inputs: [{ key: "yoy", derived: "capex:hyperscalers:yoy" }],
+    provenance: ["edgar:MSFT:capex", "edgar:GOOGL:capex", "edgar:AMZN:capex", "edgar:META:capex", "edgar:ORCL:capex"],
+    revisedInputs: true,
+    priceBased: false,
+    unit: "%（合计同比）",
+    params: { quarters: { label: "同比增速连续下降", default: 2, unit: "个季度" } },
+    describe: (p) => ({
+      warning: `云厂商资本开支合计（只计各成员都已申报的季度）同比增速连续 ${p.quarters} 个季度下降（AI 硬件需求的增速见顶信号）`,
+      watch: "同比增速较上一季度下降",
+    }),
+    evaluate(data, p) {
+      const v = valid(data.yoy ?? []);
+      return v.map((x, i) => {
+        let falling = 0;
+        for (let j = i; j > 0 && v[j]!.value < v[j - 1]!.value; j--) falling++;
+        return { date: x.date, value: x.value, state: falling >= p.quarters! ? "warning" : falling >= 1 ? "watch" : "normal" };
+      });
+    },
+  },
+  {
+    id: "tsmc-revenue",
+    name: "台积电月营收转弱",
+    version: 1,
+    inputs: [{ key: "yoy", derived: "tsmc:revenue:3m-yoy" }],
+    provenance: ["tsmc:revenue"],
+    revisedInputs: false,
+    priceBased: false,
+    unit: "%（3 个月平均同比）",
+    params: { warning: { label: "警示阈值（低于）", default: 0, unit: "%" }, watch: { label: "关注阈值（低于）", default: 10, unit: "%" } },
+    describe: (p) => ({ warning: `台积电最近 3 个月营收合计同比低于 ${p.warning}%`, watch: `低于 ${p.watch}%` }),
+    evaluate: (data, p) => valid(data.yoy ?? []).map((x) => ({ date: x.date, value: x.value, state: level(x.value, p.warning!, p.watch!, false) })),
+  },
 ];
 
 export const RULE_MAP = new Map(RULES.map((r) => [r.id, r]));

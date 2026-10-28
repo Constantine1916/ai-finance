@@ -70,9 +70,13 @@ async function linePoints(db: Db, line: LineSpec): Promise<Point[]> {
 export function derivedInputs(derivedId: string): string[] {
   if (derivedId === "net-liquidity") return ["fred:WALCL", "fred:WTREGEN", "fred:RRPONTSYD"];
   if (derivedId === "ratio:VIX/VIX3M") return ["fred:VIXCLS", "fred:VXVCLS"];
+  if (derivedId.startsWith("tsmc:")) return ["tsmc:revenue"];
+  if (derivedId.startsWith("capex:hyperscalers")) return ["edgar:MSFT:capex", "edgar:GOOGL:capex", "edgar:AMZN:capex", "edgar:META:capex", "edgar:ORCL:capex"];
   const [kind, arg = ""] = derivedId.split(":");
   if (kind === "ratio") return arg.split("/").map((t) => `tiingo:${t}:close`);
   if (kind === "adj" || kind === "sma200" || kind === "dd52w") return [`tiingo:${arg}:close`];
+  if (kind === "pe") return [`tiingo:${arg}:close`, `edgar:${arg}:netIncome`];
+  if (kind === "pb") return [`tiingo:${arg}:close`, `edgar:${arg}:equity`];
   return [];
 }
 
