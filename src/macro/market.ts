@@ -58,31 +58,23 @@ function valueOnOrBefore(points: Point[], date: string) {
   return null;
 }
 
+// 单个代码的价格统计：最新价（交易时段为盘中暂定价）、距 200 日线、距 52 周高点、1 个月、3 个月、年初至今
+export async function priceStats(db: Db, symbol: string, now = new Date()) {
+  const adj = await readDerived(db, `adj:${symbol}`);
+  const sma200 = (await readDerived(db, `sma200:${symbol}`)).at(-1)?.value ?? null;
+  const view = await latestPrice(db, symbol, `tiingo:${symbol}:close`, now);
+  if (view.kind === "none" || adj.length === 0) return { view, price: null, vs200: null, dd52w: null, r1m: null, r3m: null, ytd: null };
+  const price = view.price;
+  // 复权价以最新收盘为基准，最新价与未复权价相同，盘中价可以直接与复权历史比较
+  const window = adj.slice(-252).map((p) => p.value ?? 0);
+  const high = Math.max(...window, view.kind === "provisional" ? price : 0);
+  // 盘中价属于今天，比最新收盘多一个交易日，回看天数相应少一天
+  const offset = view.kind === "provisional" ? 1 : 0;
+  const ago = (tradingDays: number) => adj[adj.length - 1 - (tradingDays - offset)]?.value ?? null;
+  const prevYearEnd = valueOnOrBefore(adj, `${Number(easternDate(now).slice(0, 4)) - 1}-12-31`);
+  return { view, price, vs200: pct(price, sma200), dd52w: pct(price, high), r1m: pct(price, ago(21)), r3m: pct(price, ago(63)), ytd: pct(price, prevYearEnd) };
+}
+
 export async function etfTable(db: Db, now = new Date()) {
-  return Promise.all(
-    ETF_ROWS.map(async (row) => {
-      const adj = await readDerived(db, `adj:${row.symbol}`);
-      const sma200 = (await readDerived(db, `sma200:${row.symbol}`)).at(-1)?.value ?? null;
-      const view = await latestPrice(db, row.symbol, `tiingo:${row.symbol}:close`, now);
-      if (view.kind === "none" || adj.length === 0) return { ...row, view, price: null, vs200: null, dd52w: null, r1m: null, r3m: null, ytd: null };
-      const price = view.price;
-      // 复权价以最新收盘为基准，最新价与未复权价相同，盘中价可以直接与复权历史比较
-      const window = adj.slice(-252).map((p) => p.value ?? 0);
-      const high = Math.max(...window, view.kind === "provisional" ? price : 0);
-      // 盘中价属于今天，比最新收盘多一个交易日，回看天数相应少一天
-      const offset = view.kind === "provisional" ? 1 : 0;
-      const ago = (tradingDays: number) => adj[adj.length - 1 - (tradingDays - offset)]?.value ?? null;
-      const prevYearEnd = valueOnOrBefore(adj, `${Number(easternDate(now).slice(0, 4)) - 1}-12-31`);
-      return {
-        ...row,
-        view,
-        price,
-        vs200: pct(price, sma200),
-        dd52w: pct(price, high),
-        r1m: pct(price, ago(21)),
-        r3m: pct(price, ago(63)),
-        ytd: pct(price, prevYearEnd),
-      };
-    }),
-  );
+  return Promise.all(ETF_ROWS.map(async (row) => ({ ...row, ...(await priceStats(db, row.symbol, now)) })));
 }

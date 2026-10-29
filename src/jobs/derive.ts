@@ -1,6 +1,6 @@
 import { eq } from "drizzle-orm";
 import type { Db } from "@/db/types";
-import { derivedValues, ingestRuns } from "@/db/schema";
+import { derivedValues, filings, ingestRuns, observations } from "@/db/schema";
 import { adjustedClose } from "@/pipeline/adjust";
 import { alignAsOf, drawdown, FORMULA_VERSION, ratio, sma, type Point } from "@/pipeline/derived";
 import { readSeries } from "@/pipeline/store";
@@ -29,6 +29,16 @@ export async function readDerivedWithStatus(db: Db, derivedId: string) {
 export async function readDerived(db: Db, derivedId: string): Promise<Point[]> {
   const rows = await db.select().from(derivedValues).where(eq(derivedValues.derivedId, derivedId)).orderBy(derivedValues.obsDate);
   return rows.map((r) => ({ date: r.obsDate, value: r.value }));
+}
+
+// 股数连同其所在申报的提交日期（来源链接即申报地址）：用于判断股数是拆股前还是拆股后的口径
+async function sharesWithFiled(db: Db, seriesId: string) {
+  return db
+    .select({ obsDate: observations.obsDate, value: observations.value, filed: filings.filedAt })
+    .from(observations)
+    .leftJoin(filings, eq(filings.url, observations.sourceRef))
+    .where(eq(observations.seriesId, seriesId))
+    .orderBy(observations.obsDate);
 }
 
 const asPoints = (rows: { obsDate: string; value: number }[]): Point[] => rows.map((r) => ({ date: r.obsDate, value: r.value }));
@@ -100,7 +110,7 @@ export async function runDerive(db: Db) {
         closes: await readSeries(db, `tiingo:${m.symbol}:close`),
         splits: await readSeries(db, `tiingo:${m.symbol}:split`),
         netIncome: await readSeries(db, edgarSeriesId(m.symbol, "netIncome")),
-        shares: await readSeries(db, edgarSeriesId(m.symbol, "dilutedShares")),
+        shares: await sharesWithFiled(db, edgarSeriesId(m.symbol, "dilutedShares")),
         equity: await readSeries(db, edgarSeriesId(m.symbol, "equity")),
       });
       if (v.length === 0) continue;

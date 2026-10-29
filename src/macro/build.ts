@@ -4,6 +4,7 @@ import { derivedValues, observations, pendingObservations, series } from "@/db/s
 import { readDerived } from "@/jobs/derive";
 import { easternDate } from "@/pipeline/calendar";
 import { annualized3m, sma, yoy, type Point } from "@/pipeline/derived";
+import { grossMargin, inventoryDays, opMargin, periodYoY } from "@/ai/ratios";
 import { freshness } from "@/pipeline/freshness";
 import { readSeries } from "@/pipeline/store";
 import type { Frequency } from "@/pipeline/types";
@@ -56,14 +57,32 @@ function transform(points: Point[], t: Transform | undefined): Point[] {
 
 const toPoints = (rows: { obsDate: string; value: number }[]): Point[] => rows.map((r) => ({ date: r.obsDate, value: r.value }));
 
+const scaled = (points: Point[], scale?: number) => (scale ? points.map((p) => ({ date: p.date, value: p.value === null ? null : p.value / scale })) : points);
+
+async function formulaPoints(db: Db, line: Extract<LineSpec, { formula: string }>): Promise<Point[]> {
+  const sfx = line.annual ? ":fy" : "";
+  const read = (metric: string, instant = false) => readSeries(db, `edgar:${line.symbol}:${metric}${instant ? "" : sfx}`);
+  switch (line.formula) {
+    case "grossMargin":
+      return grossMargin(await read("revenue"), await read("grossProfit"), await read("cogs"));
+    case "opMargin":
+      return opMargin(await read("revenue"), await read("opIncome"));
+    case "inventoryDays":
+      return inventoryDays(await read("inventory", true), await read("cogs"), Boolean(line.annual));
+    case "revenueYoY":
+      return periodYoY(await read("revenue"));
+  }
+}
+
 async function linePoints(db: Db, line: LineSpec): Promise<Point[]> {
-  if ("derived" in line) return readDerived(db, line.derived);
+  if ("formula" in line) return formulaPoints(db, line);
+  if ("derived" in line) return scaled(await readDerived(db, line.derived), line.scale);
   const base = toPoints(await readSeries(db, line.series));
   if ("newer" in line) {
     const last = base.at(-1)?.date ?? "";
     return [...base, ...toPoints(await readSeries(db, line.newer)).filter((p) => p.date > last)];
   }
-  return transform(base, line.transform);
+  return scaled(transform(base, line.transform), line.scale);
 }
 
 // 派生序列的输入序列，用于显示来源与时效
@@ -81,6 +100,11 @@ export function derivedInputs(derivedId: string): string[] {
 }
 
 export function lineSourceIds(line: LineSpec): string[] {
+  if ("formula" in line) {
+    const sfx = line.annual ? ":fy" : "";
+    if (line.formula === "inventoryDays") return [`edgar:${line.symbol}:inventory`, `edgar:${line.symbol}:cogs${sfx}`];
+    return [`edgar:${line.symbol}:revenue${sfx}`];
+  }
   if ("derived" in line) return derivedInputs(line.derived);
   return "newer" in line ? [line.series, line.newer] : [line.series];
 }

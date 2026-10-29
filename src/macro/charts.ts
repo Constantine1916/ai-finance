@@ -5,10 +5,13 @@ export type Range = "1y" | "3y" | "5y" | "10y" | "max";
 export const RANGES: Range[] = ["1y", "3y", "5y", "10y", "max"];
 export const RANGE_LABEL: Record<Range, string> = { "1y": "1 年", "3y": "3 年", "5y": "5 年", "10y": "10 年", max: "全部" };
 
+export type Formula = "grossMargin" | "opMargin" | "inventoryDays" | "revenueYoY";
+
 export type LineSpec =
-  | { label: string; series: string; transform?: Transform } // 观测序列
-  | { label: string; derived: string } // derived_values 中的派生序列
-  | { label: string; series: string; newer: string }; // 主序列 + 更早发布来源补上最新日期（如 FRED + 财政部）
+  | { label: string; series: string; transform?: Transform; scale?: number } // 观测序列；scale 为显示时的除数
+  | { label: string; derived: string; scale?: number } // derived_values 中的派生序列
+  | { label: string; series: string; newer: string } // 主序列 + 更早发布来源补上最新日期（如 FRED + 财政部）
+  | { label: string; formula: Formula; symbol: string; annual?: boolean }; // 由财报序列计算的比率
 
 export type Annotation =
   | { kind: "threshold"; value: number; label: string }
@@ -218,7 +221,107 @@ export const SECTIONS: { id: string; title: string; charts: ChartSpec[] }[] = [
   },
 ];
 
+// 1B：AI 产业周期页的图表
+export const AI_CHARTS: ChartSpec[] = [
+  {
+    id: "ai-capex",
+    title: "云厂商资本开支合计",
+    unit: "十亿美元",
+    lines: [{ label: "合计（完整季度）", derived: "capex:hyperscalers", scale: 1e9 }],
+    defaultRange: "10y",
+    note: "微软、谷歌、亚马逊、Meta、甲骨文等计入汇总的公司按财季中点归入日历季度后相加（微软财年 6 月结束、甲骨文 5 月结束）；任一公司尚未申报的季度不计入。成员可在下方关注池中调整。",
+  },
+  {
+    id: "ai-capex-yoy",
+    title: "云厂商资本开支合计同比",
+    unit: "%",
+    lines: [{ label: "同比", derived: "capex:hyperscalers:yoy" }],
+    annotations: [{ kind: "threshold", value: 0, label: "0" }],
+    defaultRange: "10y",
+    note: "需求端最关键的指标：关注的是增速的变化，增速连续下降往往先于绝对值下降。",
+  },
+  {
+    id: "ai-cloud-growth",
+    title: "云业务收入同比增速（人工录入）",
+    unit: "%",
+    lines: [
+      { label: "Azure", series: "manual:cloud-growth-AZURE" },
+      { label: "谷歌云", series: "manual:cloud-growth-GCP" },
+      { label: "AWS", series: "manual:cloud-growth-AWS" },
+    ],
+    defaultRange: "5y",
+    note: "分部收入不在结构化财务数据中，来自财报电话会或新闻稿，在数据健康页录入。资本开支持续增长而云收入跟不上，资本开支迟早会被削减。",
+  },
+  { id: "ai-tsmc", title: "台积电月营收", unit: "十亿新台币", lines: [{ label: "月营收", series: "tsmc:revenue", scale: 1e3 }], defaultRange: "5y", note: "取自台积电每月向 SEC 报送的营收 6-K，后一份报告的上月与去年同月数值用于核对。" },
+  { id: "ai-tsmc-yoy", title: "台积电月营收：3 个月平均同比", unit: "%", lines: [{ label: "3 个月平均同比", derived: "tsmc:revenue:3m-yoy" }], annotations: [{ kind: "threshold", value: 0, label: "0" }], defaultRange: "5y" },
+  {
+    id: "ai-korea",
+    title: "韩国半导体出口（人工录入）",
+    unit: "十亿美元",
+    lines: [
+      { label: "全月", series: "manual:kr-semis-exports" },
+      { label: "当月前 20 天", series: "manual:kr-semis-exports-20d" },
+    ],
+    defaultRange: "3y",
+    note: "韩国关税厅每月 1 日公布上月全月、21 日公布当月前 20 天数据；两者分开记录，不混为同一序列。",
+  },
+  { id: "ai-semis-ip", title: "美国半导体与电子元件工业产出同比", unit: "%", lines: [{ label: "同比", series: "fred:IPG3344S", transform: "yoy" }], annotations: [{ kind: "threshold", value: 0, label: "0" }], defaultRange: "10y" },
+  {
+    id: "ai-dram",
+    title: "DRAM 价格（人工录入）",
+    unit: "美元",
+    lines: [
+      { label: "合约价", series: "manual:dram-contract" },
+      { label: "现货价", series: "manual:dram-spot" },
+    ],
+    defaultRange: "3y",
+    note: "来自 TrendForce、DRAMeXchange 等公开报告。现货价通常先于合约价掉头。",
+  },
+  { id: "ai-mu-capex-guide", title: "美光当财年资本开支指引（人工录入）", unit: "十亿美元", lines: [{ label: "指引", series: "manual:capex-guide-MU" }], defaultRange: "5y", note: "存储厂大幅上调资本开支、宣布新厂，常是周期见顶的信号之一。" },
+];
+
 // 需要换算为“期初 = 100”的图表
 export const INDEXED_CHARTS = new Set(["breadth", "indices"]);
 
-export const CHARTS = new Map(SECTIONS.flatMap((s) => s.charts.map((c) => [c.id, c] as const)));
+export const CHARTS = new Map([...SECTIONS.flatMap((s) => s.charts), ...AI_CHARTS].map((c) => [c.id, c] as const));
+
+// 个股图表：按代码动态生成，编号形如 stock:NVDA:margins
+export const STOCK_CHART_KINDS = ["price", "revenue", "margins", "inventory", "capex", "pe", "pb"] as const;
+export type StockChartKind = (typeof STOCK_CHART_KINDS)[number];
+
+export function stockChartSpec(symbol: string, kind: StockChartKind, annual: boolean, currency: string): ChartSpec {
+  const id = `stock:${symbol}:${kind}`;
+  const sfx = annual ? ":fy" : "";
+  const money = currency === "USD" ? "十亿美元" : `十亿 ${currency}`;
+  const period = annual ? "年度" : "单季";
+  switch (kind) {
+    case "price":
+      return { id, title: `${symbol} 复权价与 200 日均线`, unit: "美元", lines: [{ label: symbol, derived: `adj:${symbol}` }, { label: "200 日均线", derived: `sma200:${symbol}` }], defaultRange: "3y" };
+    case "revenue":
+      return {
+        id,
+        title: `营收（${period}）与同比`,
+        unit: `${money}；同比为 %`,
+        lines: [{ label: `营收（${money}）`, series: `edgar:${symbol}:revenue${sfx}`, scale: 1e9 }, { label: "同比 %", formula: "revenueYoY", symbol, annual }],
+        defaultRange: "10y",
+        note: "营收与同比单位不同，共用一个纵轴只为对照时间位置；数值以悬停提示与表格为准。",
+      };
+    case "margins":
+      return {
+        id,
+        title: `毛利率与营业利润率（${period}）`,
+        unit: "%",
+        lines: [{ label: "毛利率", formula: "grossMargin", symbol, annual }, { label: "营业利润率", formula: "opMargin", symbol, annual }],
+        defaultRange: "10y",
+        note: "公司未申报毛利时以营收减营业成本计算；未申报营业利润时该线为空。",
+      };
+    case "inventory":
+      return { id, title: "存货天数", unit: "天", lines: [{ label: "存货天数", formula: "inventoryDays", symbol, annual }], defaultRange: "10y", note: `存货天数 = 期末存货 / ${annual ? "全年营业成本 × 365" : "单季营业成本 × 91"}。半导体周期见顶时常见增速放缓与存货堆积。` };
+    case "capex":
+      return { id, title: `资本开支（${period}）`, unit: money, lines: [{ label: "资本开支", series: `edgar:${symbol}:capex${sfx}`, scale: 1e9 }], defaultRange: "10y" };
+    case "pe":
+      return { id, title: "滚动 12 个月市盈率", unit: "倍", lines: [{ label: "市盈率", derived: `pe:${symbol}` }], defaultRange: "10y", note: "市值 / 最近四季净利润合计；财报在期末 60 天后才计入。亏损期间为空。周期股在盈利高峰时市盈率最低，不宜据此判断贵贱。" };
+    case "pb":
+      return { id, title: "市净率", unit: "倍", lines: [{ label: "市净率", derived: `pb:${symbol}` }], defaultRange: "10y", note: "市值 / 期末股东权益；财报在期末 60 天后才计入。" };
+  }
+}

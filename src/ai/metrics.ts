@@ -59,7 +59,7 @@ export interface ValuationInputs {
   closes: Obs[]; // 未复权收盘价
   splits: Obs[];
   netIncome: Obs[]; // 单季
-  shares: Obs[]; // 单季稀释加权股数
+  shares: (Obs & { filed?: string | null })[]; // 单季稀释加权股数；filed 为该数值所在申报的提交日期
   equity: Obs[]; // 期末
 }
 
@@ -74,7 +74,7 @@ export interface ValuationPoint {
 const addDays = (d: string, n: number) => new Date(Date.parse(d) + n * 86_400_000).toISOString().slice(0, 10);
 
 export function valuationSeries(input: ValuationInputs, sample: "weekly" | "daily" = "weekly"): ValuationPoint[] {
-  const available = (rows: Obs[], date: string) => rows.filter((r) => addDays(r.obsDate, FILING_LAG_DAYS) <= date);
+  const available = <T extends Obs>(rows: T[], date: string) => rows.filter((r) => addDays(r.obsDate, FILING_LAG_DAYS) <= date);
   const ni = [...input.netIncome].sort((a, b) => a.obsDate.localeCompare(b.obsDate));
   const out: ValuationPoint[] = [];
   const closes = [...input.closes].sort((a, b) => a.obsDate.localeCompare(b.obsDate));
@@ -86,8 +86,15 @@ export function valuationSeries(input: ValuationInputs, sample: "weekly" | "dail
     const quarters = available(ni, c.obsDate).slice(-4);
     const equity = available(input.equity, c.obsDate).at(-1);
     if (!shares) return out.push({ date: c.obsDate, pe: null, pb: null, peStatus: "missing", pbStatus: "missing" });
-    // 股数截止日之后发生的拆股：股数乘以拆股系数，与当日价格口径一致
-    const factor = input.splits.filter((s) => s.obsDate > shares.obsDate && s.obsDate <= c.obsDate).reduce((a, s) => a * s.value, 1);
+    // 拆股后提交的财报会把以前期间的股数追溯调整为拆股后口径，股数的口径由“提交日期”决定（未知时按期末）。
+    // 把股数换算到价格当日的口径：股数提交之后、价格日期之前的拆股乘以系数；
+    // 价格日期之后、股数提交之前的拆股（股数口径比价格新）除以系数。
+    const basisDate = shares.filed ?? shares.obsDate;
+    const factor = input.splits.reduce((a, s) => {
+      if (s.obsDate > basisDate && s.obsDate <= c.obsDate) return a * s.value;
+      if (s.obsDate > c.obsDate && s.obsDate <= basisDate) return a / s.value;
+      return a;
+    }, 1);
     const marketCap = c.value * shares.value * factor;
     const consecutive = quarters.length === 4 && Date.parse(quarters[3]!.obsDate) - Date.parse(quarters[0]!.obsDate) <= 300 * 86_400_000;
     const ttm = consecutive ? quarters.reduce((a, q) => a + q.value, 0) : null;

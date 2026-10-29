@@ -8,11 +8,11 @@
 - 许可：[上游 AGPL-3.0 原文](https://github.com/Open-Dev-Society/OpenStock/blob/dc2db1bb2fdce2da3bb1eba7c51a73ad52f7d464/LICENSE)。本仓库的 `LICENSE` 保留相同许可证原文。
 - 仓库关系：独立 Git 历史，不是 GitHub Fork；这不免除实际改编源码所附带的许可义务。
 
-当前提交只包含规格文档，尚未移植应用源码。2026-10-25 第一阶段改为个人使用的宏观与 AI 产业看板后，参考范围缩小为下表；实际改编时在对应文件保留来源标注，在本文件登记最终文件映射，并把研究基线更新到届时的上游提交（2026-10-25 查看的最新提交为 `855ca6a`）：
+2026-10-25 第一阶段改为个人使用的宏观与 AI 产业看板后，参考范围缩小为下表；实际改编时在对应文件保留来源标注，在本文件登记最终文件映射，并把研究基线更新到届时的上游提交（2026-10-25 查看的最新提交为 `855ca6a`）：
 
 | 上游文件 | 参考内容 | 本项目设计中的调整 |
 | --- | --- | --- |
-| `components/TradingViewWidget.tsx`、`lib/constants.ts` | 嵌入脚本与配置组织方式 | 只用于个股详情的 K 线，保留供应商标识，增加加载失败与超时提示 |
+| `components/TradingViewWidget.tsx`、`hooks/useTradingViewWidget.tsx`、`lib/constants.ts` | 嵌入脚本与配置组织方式 | **已改编**为 `src/components/TradingViewChart.tsx`（2026-10-28，上游提交 `855ca6af33ae0b86f8835ecda6c31707f4ec3891`）：只允许 K 线脚本，增加加载失败、15 秒超时、重试与外部查看链接，切换证券时清理旧组件，保留 TradingView 标识；文件头注明来源与许可 |
 | `lib/seo/edgar.ts` | SEC 访问规范、申报链接构造 | 改为采集 XBRL 财务数据并保存申报编号 |
 | `lib/actions/finnhub.actions.ts` | `/quote` 报价请求、超时与失败记录 | 只在 worker 中定时采集盘中快照，使用单一密钥，不轮换多个免费密钥 |
 

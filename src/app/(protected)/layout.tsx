@@ -18,6 +18,9 @@ export default async function ProtectedLayout({ children }: { children: React.Re
           <Link href="/macro" className="text-[var(--muted)] hover:text-[var(--text)]">
             宏观
           </Link>
+          <Link href="/ai" className="text-[var(--muted)] hover:text-[var(--text)]">
+            AI 产业
+          </Link>
           <Link href="/calendar" className="text-[var(--muted)] hover:text-[var(--text)]">
             日历
           </Link>

@@ -59,6 +59,22 @@ describe("valuation", () => {
     expect(post.pe).toBeCloseTo(pre.pe! / 1); // 拆股后价格变为 1/10、股数 ×10，市盈率不变
   });
 
+  it("does not scale share counts that were already restated to the post-split basis", () => {
+    // 拆股（2024-06-10，1 拆 10）后提交的申报把 2024-04-28 季度的股数追溯为拆股后口径 25
+    const input = { ...base, netIncome: [o("2023-07-30", 10), o("2023-10-29", 10), o("2024-01-28", 10), o("2024-04-28", 10)], equity: [o("2024-04-28", 400)], splits: [o("2024-06-10", 10)] };
+    const restated = valuationSeries({ ...input, shares: [{ obsDate: "2024-04-28", value: 25, filed: "2024-08-28" }], closes: [o("2024-07-01", 120)] }, "daily")[0]!;
+    expect(restated.pe).toBeCloseTo((120 * 25) / 40);
+    const original = valuationSeries({ ...input, shares: [{ obsDate: "2024-04-28", value: 2.5, filed: "2024-05-29" }], closes: [o("2024-07-01", 120)] }, "daily")[0]!;
+    expect(original.pe).toBeCloseTo((120 * 25) / 40);
+  });
+
+  it("converts restated post-split share counts back for prices before the split", () => {
+    // 2020-10 季度的股数 25 是拆股（2021-07-20，1 拆 4）之后提交的；拆股前的价格要配拆股前口径 25 / 4
+    const input = { ...base, netIncome: [o("2020-01-26", 10), o("2020-04-26", 10), o("2020-07-26", 10), o("2020-10-25", 10)], equity: [o("2020-10-25", 400)], splits: [o("2021-07-20", 4)] };
+    const r = valuationSeries({ ...input, shares: [{ obsDate: "2020-10-25", value: 25, filed: "2021-11-22" }], closes: [o("2021-03-01", 400)] }, "daily")[0]!;
+    expect(r.pe).toBeCloseTo((400 * 25) / 4 / 40);
+  });
+
   it("summarizes the history range and current percentile", () => {
     expect(historyRange([10, 20, 30, 40])).toMatchObject({ min: 10, median: 30, max: 40, percentile: 100 });
     expect(historyRange([null, null])).toBeNull();
