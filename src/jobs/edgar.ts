@@ -1,6 +1,6 @@
 import { and, eq, inArray } from "drizzle-orm";
 import type { Db } from "@/db/types";
-import { filings, ingestRuns, observationRevisions, pendingObservations } from "@/db/schema";
+import { filings, ingestRuns, observationRevisions, observations, pendingObservations } from "@/db/schema";
 import { conceptsFor, METRICS, type Metric } from "@/ai/companies";
 import { annualSeries, consistentMismatches, instantSeries, quarterlySeries, type PeriodValue } from "@/ai/extract";
 import { activeMembers } from "@/ai/universe";
@@ -74,6 +74,14 @@ export async function ingestCompanyFacts(db: Db, symbol: string, cik: string, cf
         }
         result.mismatches.push(`${metric} ${bad.end}`);
       }
+    }
+
+    // 所有者已确认过的季度（正式数据中已有且数值相同）不再搁置；数值变化时才需要重新确认
+    if (held.size) {
+      const confirmed = new Map(
+        (await db.select({ d: observations.obsDate, v: observations.value }).from(observations).where(and(eq(observations.seriesId, def.id), inArray(observations.obsDate, [...held])))).map((r) => [r.d, r.v]),
+      );
+      for (const v of values) if (held.has(v.end) && confirmed.get(v.end) === v.value) held.delete(v.end);
     }
 
     const fetchedAt = new Date();

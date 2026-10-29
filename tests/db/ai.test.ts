@@ -5,6 +5,7 @@ import { addMember, activeMembers, ensureDefaultUniverse, removeMember, updateMe
 import { DEFAULT_UNIVERSE } from "@/ai/companies";
 import { ingestCompanyFacts } from "@/jobs/edgar";
 import { applyReport, TSMC_REVENUE } from "@/jobs/tsmc";
+import { confirmPending } from "@/pipeline/store";
 import { readSeries, upsertSeries } from "@/pipeline/store";
 import type { CompanyFacts, Fact } from "@/sources/edgar";
 import { testDb } from "./helpers";
@@ -35,6 +36,20 @@ describe("EDGAR ingest", () => {
     expect(revisions.map((x) => x.previousValue)).toEqual([3]);
     await ingestCompanyFacts(db, "TSTA", "1", cf); // 再次处理不重复记录重述
     expect((await db.select().from(observationRevisions).where(eq(observationRevisions.seriesId, "edgar:TSTA:netIncome"))).length).toBe(1);
+  });
+
+  it("keeps owner-confirmed quarters confirmed on later ingests unless the value changes", async () => {
+    const y = new Date().getUTCFullYear() - 1; // 需在最近两年内，否则按外国申报（年度）口径处理
+    const bad = recent(y).map((x) => (x.end.endsWith("12-31") && x.start?.endsWith("01-01") ? { ...x, val: 99 } : x));
+    await ingestCompanyFacts(db, "TSTC", "3", facts({ Revenues: bad }));
+    const pending = await db.select().from(pendingObservations).where(eq(pendingObservations.seriesId, "edgar:TSTC:revenue"));
+    expect(pending).toHaveLength(4);
+    for (const p of pending) await confirmPending(db, p.seriesId, p.obsDate);
+    await ingestCompanyFacts(db, "TSTC", "3", facts({ Revenues: bad }));
+    expect(await db.select().from(pendingObservations).where(eq(pendingObservations.seriesId, "edgar:TSTC:revenue"))).toHaveLength(0);
+    const changed = bad.map((x) => (x.end === `${y}-03-31` && x.start === `${y}-01-01` ? { ...x, val: 10.5, filed: "2027-01-01" } : x));
+    await ingestCompanyFacts(db, "TSTC", "3", facts({ Revenues: changed }));
+    expect((await db.select().from(pendingObservations).where(eq(pendingObservations.seriesId, "edgar:TSTC:revenue"))).map((p) => p.obsDate)).toEqual([`${y}-03-31`]);
   });
 
   it("stores annual series in the reporting currency for 20-F filers", async () => {
