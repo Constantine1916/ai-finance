@@ -97,6 +97,14 @@ describe("adapters", () => {
     expect(div).toHaveLength(1);
   });
 
+  it("Finnhub retries a transient failure once per symbol", async () => {
+    const spy = vi.spyOn(globalThis, "fetch").mockRejectedValueOnce(new TypeError("fetch failed")).mockResolvedValueOnce(new Response(JSON.stringify({ c: 770.1, t: 1793000000 })));
+    const { snapshots, errors } = await fetchQuotes(["SPY"], "k", ctx.signal);
+    expect(spy).toHaveBeenCalledTimes(2);
+    expect(snapshots[0]!.price).toBe(770.1);
+    expect(errors).toEqual([]);
+  });
+
   it("Finnhub treats a zero price as no coverage, not a price of 0", async () => {
     mockFetch({ c: 0, t: 0 });
     const { snapshots, errors } = await fetchQuotes(["XYZ"], "k", ctx.signal);

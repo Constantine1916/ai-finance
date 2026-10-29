@@ -6,7 +6,8 @@
 
 ## 当前状态
 
-- 规格已于 2026-10-26 获用户批准。1A 于 2026-10-27 部署到 https://finance.aicave.cn（pm2：ai-finance-web、ai-finance-worker），部署细节见 README。进度以 `openspec/changes/build-ai-finance-mvp/tasks.md` 的勾选情况为准。
+- 规格已于 2026-10-26 获用户批准。1A 于 2026-10-27、1B 于 2026-10-28 部署到 https://finance.aicave.cn（pm2：ai-finance-web、ai-finance-worker），部署细节见 README。只剩任务 8.2（7 天运行验证）。
+- 不要在运行目录直接 `npm run build` 后不重载：线上 web 进程读同一个 `.next`，构建后须立即 `pm2 reload`，或使用 `deploy/deploy.sh`。进度以 `openspec/changes/build-ai-finance-mvp/tasks.md` 的勾选情况为准。
 - 第一阶段是个人使用的宏观与 AI 产业看板，旧的多用户四模块草案已被替换（见 git 历史）。
 - 修改规格时同时遵守 `openspec/config.yaml` 中的 `rules`。
 
