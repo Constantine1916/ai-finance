@@ -100,8 +100,8 @@
 ### Requirement: Manual entries
 系统 SHALL 为没有可用接口的数据提供人工录入，录入时 MUST 填写来源链接、数据日期与单位；人工数据在页面上标记为人工录入，修改保留历史记录。
 
-#### Scenario: Enter a memory price data point
-- **WHEN** 用户录入一条 DRAM 合约价但未填写来源链接
+#### Scenario: Enter a manual data point without source
+- **WHEN** 用户录入一条存储厂资本开支指引但未填写来源链接
 - **THEN** 系统拒绝保存并提示必须填写来源
 
 #### Scenario: Display manual data

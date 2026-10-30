@@ -13,9 +13,9 @@
 | 商业接口 | [Finnhub](https://finnhub.io/) | 盘中报价快照（与 OpenStock 相同的 `/quote`） | 免费密钥，每分钟 60 次 | 2026-10-26 用免费密钥实测：SPY 报价可用；K 线返回 403；VIX 等指数报价需要付费订阅。因此只用于股票与 ETF 盘中快照 |
 | 官方一手 | [SEC EDGAR](https://www.sec.gov/search-filings/edgar-application-programming-interfaces) | 美股公司财报与申报列表 | `companyfacts`、`submissions` 接口，无需密钥，需声明 User-Agent | 已实测 NVDA、GOOGL、TSM |
 | 官方一手 | SEC 6-K（台积电每月营收报告） | 台积电月营收 | 解析 6-K 营收表，报告之间交叉核对 | 2026-10-28 实测：官网与台湾证交所 OpenAPI 均返回 403；6-K 解析 43 份，2022-03 至 2026-09 共 55 个月无缺口、无不一致 |
-| 官方一手 | 韩国关税厅 | 半导体出口（每月 1 日全月、21 日前 20 天） | 先人工录入；data.go.kr 接口待核实 | 未实测 |
+| 不纳入 | 韩国关税厅 | 半导体出口 | 2026-10-30 移除：data.go.kr 接口（数据集 15100475）需韩国实名注册，只有每月约 15 日更新的确认数据，前 20 天数据只发新闻稿 | — |
 | 商业接口 | [Tiingo](https://www.tiingo.com/) 日线行情 | ETF 与个股的复权收盘价 | API，免费密钥 | 2026-10-26 实测可用：NVDA 2024-06-10 拆股（系数 10）前后复权价连续，SOXX 最新到 10-23。免费档：每小时 50 次、每日 1000 次、每月 500 个代码、每月 1 GB 流量，许可为“仅限个人内部使用”，与本项目的私有部署一致 |
-| 付费或无接口 | TrendForce、DRAMeXchange | 存储现货与合约价格 | 人工录入公开报告，不抓取网页 | — |
+| 不纳入 | TrendForce、DRAMeXchange | 存储现货与合约价格 | 2026-10-30 移除：使用条款第 6 条禁止爬虫等自动采集，合约价为付费内容 | — |
 | 付费 | FactSet、LSEG 等 | 分析师一致预期与盈利修正 | 第一阶段不提供 | — |
 | 嵌入展示 | [TradingView Widgets](https://www.tradingview.com/widget/) | 个股详情的 K 线 | 浏览器加载，保留其标识 | 只展示，不提取数据 |
 

@@ -50,7 +50,7 @@ export default async function AiPage({ searchParams }: { searchParams: Promise<{
   return (
     <main className="mx-auto max-w-7xl px-4 py-8">
       <h1 className="text-2xl font-semibold">AI 产业周期</h1>
-      <p className="mt-2 text-sm text-[var(--muted)]">需求端看云厂商资本开支与云收入，供给端看台积电与韩国出口，个股看营收增速、毛利率与存货。分层与周期分类是人工标签，不是指数成分或投资建议。</p>
+      <p className="mt-2 text-sm text-[var(--muted)]">需求端看云厂商资本开支与云收入，供给端看台积电与半导体工业产出，个股看营收增速、毛利率与存货。分层与周期分类是人工标签，不是指数成分或投资建议。</p>
       {msg && <p className="mt-2 text-sm text-[var(--up)]">{msg}</p>}
       {error && (
         <p role="alert" className="mt-2 text-sm text-[var(--down)]">
@@ -77,7 +77,7 @@ export default async function AiPage({ searchParams }: { searchParams: Promise<{
 
       <section id="supply" className="mt-10 scroll-mt-4">
         <h2 className="text-lg font-semibold">供给与领先指标</h2>
-        <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-2">{["ai-tsmc", "ai-tsmc-yoy", "ai-korea", "ai-semis-ip"].map(chart)}</div>
+        <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-2">{["ai-tsmc", "ai-tsmc-yoy", "ai-semis-ip"].map(chart)}</div>
       </section>
 
       <section id="universe" className="mt-10 scroll-mt-4">
@@ -277,7 +277,7 @@ export default async function AiPage({ searchParams }: { searchParams: Promise<{
           </table>
           <p className="mt-2 text-xs text-[var(--muted)]">只列出分类为“强周期”且按季申报的成员；分类可在关注池中调整。</p>
         </div>
-        <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-2">{["ai-dram", "ai-mu-capex-guide"].map(chart)}</div>
+        <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-2">{["ai-mu-capex-guide"].map(chart)}</div>
       </section>
     </main>
   );

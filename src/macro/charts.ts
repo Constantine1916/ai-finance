@@ -254,29 +254,7 @@ export const AI_CHARTS: ChartSpec[] = [
   },
   { id: "ai-tsmc", title: "台积电月营收", unit: "十亿新台币", lines: [{ label: "月营收", series: "tsmc:revenue", scale: 1e3 }], defaultRange: "5y", note: "取自台积电每月向 SEC 报送的营收 6-K，后一份报告的上月与去年同月数值用于核对。" },
   { id: "ai-tsmc-yoy", title: "台积电月营收：3 个月平均同比", unit: "%", lines: [{ label: "3 个月平均同比", derived: "tsmc:revenue:3m-yoy" }], annotations: [{ kind: "threshold", value: 0, label: "0" }], defaultRange: "5y" },
-  {
-    id: "ai-korea",
-    title: "韩国半导体出口（人工录入）",
-    unit: "十亿美元",
-    lines: [
-      { label: "全月", series: "manual:kr-semis-exports" },
-      { label: "当月前 20 天", series: "manual:kr-semis-exports-20d" },
-    ],
-    defaultRange: "3y",
-    note: "韩国关税厅每月 1 日公布上月全月、21 日公布当月前 20 天数据；两者分开记录，不混为同一序列。",
-  },
   { id: "ai-semis-ip", title: "美国半导体与电子元件工业产出同比", unit: "%", lines: [{ label: "同比", series: "fred:IPG3344S", transform: "yoy" }], annotations: [{ kind: "threshold", value: 0, label: "0" }], defaultRange: "10y" },
-  {
-    id: "ai-dram",
-    title: "DRAM 价格（人工录入）",
-    unit: "美元",
-    lines: [
-      { label: "合约价", series: "manual:dram-contract" },
-      { label: "现货价", series: "manual:dram-spot" },
-    ],
-    defaultRange: "3y",
-    note: "来自 TrendForce、DRAMeXchange 等公开报告。现货价通常先于合约价掉头。",
-  },
   { id: "ai-mu-capex-guide", title: "美光当财年资本开支指引（人工录入）", unit: "十亿美元", lines: [{ label: "指引", series: "manual:capex-guide-MU" }], defaultRange: "5y", note: "存储厂大幅上调资本开支、宣布新厂，常是周期见顶的信号之一。" },
 ];
 

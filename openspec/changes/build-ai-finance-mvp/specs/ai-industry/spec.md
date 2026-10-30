@@ -61,26 +61,22 @@
 - **THEN** 该季度合计标为不完整并列出缺少的公司，不与完整季度直接比较
 
 ### Requirement: AI supply and leading indicators
-系统 SHALL 提供台积电月营收及其同比与 3 个月平均同比、韩国半导体出口（全月与前 20 天）、美国半导体与电子元件工业产出。
+系统 SHALL 提供台积电月营收及其同比与 3 个月平均同比、美国半导体与电子元件工业产出。
 
 #### Scenario: TSMC monthly revenue cross-check
 - **WHEN** 台积电官网月营收与对应 6-K 申报的数值不一致
 - **THEN** 该观测标为待确认，直到用户核实
 
-#### Scenario: Partial month exports
-- **WHEN** 只有当月前 20 天的韩国出口数据
-- **THEN** 页面把它标为前 20 天数据，不与全月数据混在同一序列
-
 ### Requirement: Cyclical stock view
-系统 SHALL 为标为强周期的证券（如存储与半导体设备）提供周期股视图：毛利率与存货天数的历史走势、市净率及其历史区间、存储现货与合约价格（人工录入）、存储厂资本开支指引（人工录入）；视图 MUST 说明周期股不宜用市盈率判断贵贱。
+系统 SHALL 为标为强周期的证券（如存储与半导体设备）提供周期股视图：毛利率与存货天数的历史走势、市净率及其历史区间、存储厂资本开支指引（人工录入）；视图 MUST 说明周期股不宜用市盈率判断贵贱。
 
 #### Scenario: View memory cycle
 - **WHEN** 用户打开美光的周期股视图
-- **THEN** 页面显示毛利率、存货天数与市净率的历史位置，以及已录入的存储价格与来源
+- **THEN** 页面显示毛利率、存货天数与市净率的历史位置，以及已录入的资本开支指引与来源
 
-#### Scenario: Memory price not entered
-- **WHEN** 最近一期存储价格尚未人工录入
-- **THEN** 页面显示最后录入日期与过期标记，不沿用旧价格冒充最新
+#### Scenario: Capex guidance not entered
+- **WHEN** 最近一期资本开支指引尚未人工录入
+- **THEN** 页面显示最后录入日期与过期标记，不沿用旧指引冒充最新
 
 ### Requirement: Valuation metrics
 系统 SHALL 根据申报数据与复权价格计算滚动 12 个月市盈率与市净率，并显示其历史区间；亏损期间 MUST 显示不适用，而不是负市盈率。

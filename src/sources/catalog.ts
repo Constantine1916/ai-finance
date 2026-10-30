@@ -132,10 +132,6 @@ const manual = (id: string, nameZh: string, unit: string, frequency: SeriesDef["
 });
 
 export const MANUAL_SERIES: SeriesDef[] = [
-  manual("kr-semis-exports", "韩国半导体出口（全月）", "Billions of U.S. Dollars", "monthly", "ai-supply", 1, { validMin: 0, validMax: 200 }),
-  manual("kr-semis-exports-20d", "韩国半导体出口（当月前 20 天）", "Billions of U.S. Dollars", "monthly", "ai-supply", -9, { validMin: 0, validMax: 200 }),
-  manual("dram-contract", "DRAM 合约价（DDR5 16Gb）", "USD", "monthly", "memory", 5, { validMin: 0, validMax: 1000 }),
-  manual("dram-spot", "DRAM 现货价（DDR5 16Gb）", "USD", "weekly", "memory", 3, { validMin: 0, validMax: 1000 }),
   manual("capex-guide-MU", "美光当财年资本开支指引", "Billions of U.S. Dollars", "quarterly", "memory", 30, { validMin: 0, validMax: 200 }),
   manual("cloud-growth-AZURE", "Azure 收入同比增速", "Percent", "quarterly", "ai-demand", 40, { validMin: -50, validMax: 300 }),
   manual("cloud-growth-GCP", "谷歌云收入同比增速", "Percent", "quarterly", "ai-demand", 40, { validMin: -50, validMax: 300 }),
