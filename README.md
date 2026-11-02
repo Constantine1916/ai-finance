@@ -62,7 +62,9 @@ npm run dev                        # http://127.0.0.1:3020
 | 日志轮转 | `deploy/logrotate-ai-finance` 安装为 `/etc/logrotate.d/ai-finance`：pm2 日志每天或超过 10 MB 轮转，保留 7 份并压缩 |
 | 定时任务 | 系统 cron：每日 03:30 `deploy/backup.sh`（保留 14 份，`/root/backups/ai-finance/`）；每 5 分钟 `deploy/check-worker.sh`（心跳超过 5 分钟则重启 worker） |
 
-更新部署：`./deploy/deploy.sh`（拉取、安装、迁移前备份、迁移、构建、`pm2 reload`）。
+更新部署：推送到 `main` 后 GitHub Actions（`.github/workflows/deploy.yml`）先跑类型、lint 与单元测试，通过后经 SSH 在 VPS 上运行 `./deploy/deploy.sh`（拉取、安装、迁移前备份、迁移、构建、`pm2 reload`、健康检查）；也可在 Actions 页面手动运行，或在 VPS 上直接执行该脚本。
+
+部署密钥只用于这一件事：VPS 的 `/root/.ssh/authorized_keys` 中以 `command="flock /tmp/ai-finance-deploy.lock …/deploy/deploy.sh",restrict` 限定，登录后只能运行部署脚本且同一时间只有一次部署。仓库密钥：`DEPLOY_SSH_KEY`（私钥）、`DEPLOY_KNOWN_HOSTS`（VPS 主机公钥）、`DEPLOY_HOST`。更换密钥时同时更新这两处。
 
 ## 开源与来源
 
