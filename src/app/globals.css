@@ -1,22 +1,319 @@
 @import "tailwindcss";
 
+/* 仪表舱配色：带青灰的枪铁色底、骨白色刻字；红、琥珀、绿只表示状态（警示、关注、正常与涨跌） */
 :root {
-  --bg: #0b0f14;
-  --panel: #121821;
-  --border: #1f2a37;
-  --text: #e6edf3;
-  --muted: #8b98a5;
-  --up: #22c55e;
-  --down: #ef4444;
-  --warn: #f59e0b;
+  --bg: #13191c;
+  --panel: #1a2226;
+  --raised: #212b30;
+  --border: #2a363c;
+  --border-strong: #3a4950;
+  --text: #e8e2d4;
+  --muted: #8e9a9d;
+  --faint: #5e6b6f;
+  --up: #3fb68b;
+  --down: #e5484d;
+  --warn: #e8a33d;
+  --font-body: "PingFang SC", "Hiragino Sans GB", "Noto Sans SC", "Microsoft YaHei", system-ui, sans-serif;
+  color-scheme: dark;
 }
 
 body {
   background: var(--bg);
   color: var(--text);
-  font-family: "PingFang SC", "Noto Sans SC", system-ui, sans-serif;
+  font-family: var(--font-body);
+  font-size: 15px;
+}
+
+.num,
+.mono {
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-variant-numeric: tabular-nums;
 }
 
 .num {
-  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+}
+
+a,
+button,
+input,
+select,
+textarea,
+summary {
+  outline-offset: 2px;
+}
+
+:focus-visible {
+  outline: 2px solid var(--text);
+  border-radius: 2px;
+}
+
+/* 页眉区：小号等宽眉题标注数据时点，宋体大标题 */
+.eyebrow {
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.page-title {
+  font-family: var(--font-display), serif;
+  font-weight: 700;
+  font-size: 2rem;
+  line-height: 1.2;
+  letter-spacing: 0.02em;
+}
+
+.page-lede {
+  margin-top: 0.5rem;
+  max-width: 60rem;
+  font-size: 0.875rem;
+  line-height: 1.7;
+  color: var(--muted);
+}
+
+.section-title {
+  display: flex;
+  align-items: baseline;
+  gap: 0.75rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--border);
+  font-family: var(--font-display), serif;
+  font-weight: 600;
+  font-size: 1.25rem;
+}
+
+/* 面板：像仪表上的一块面板，顶边略亮，模拟金属倒角 */
+.panel {
+  min-width: 0;
+  border: 1px solid var(--border);
+  border-top-color: var(--border-strong);
+  border-radius: 6px;
+  background: var(--panel);
+  padding: 1rem;
+}
+
+.panel-title {
+  font-weight: 600;
+  font-size: 0.9375rem;
+}
+
+.unit {
+  margin-left: 0.375rem;
+  padding: 0 0.3rem;
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: 10.5px;
+  font-weight: 400;
+  color: var(--muted);
+  vertical-align: 2px;
+}
+
+/* 表格：表头用等宽小字，行间细线 */
+.tbl th {
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: 11px;
+  font-weight: 400;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.tbl tbody tr {
+  border-top: 1px solid var(--border);
+}
+
+.tbl tbody tr:hover {
+  background: color-mix(in srgb, var(--raised) 60%, transparent);
+}
+
+/* 分段按钮：区间选择等 */
+.seg {
+  display: inline-flex;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.seg button {
+  padding: 0.125rem 0.6rem;
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.seg button + button {
+  border-left: 1px solid var(--border);
+}
+
+.seg button:hover {
+  color: var(--text);
+}
+
+.seg button[aria-pressed="true"] {
+  background: var(--text);
+  color: var(--bg);
+}
+
+.btn,
+.btn-primary {
+  border: 1px solid var(--border-strong);
+  border-radius: 4px;
+  padding: 0.25rem 0.75rem;
+  font-size: 0.875rem;
+}
+
+.btn:hover {
+  background: var(--raised);
+}
+
+.btn-primary {
+  border-color: var(--text);
+  background: var(--text);
+  color: var(--bg);
+  font-weight: 500;
+}
+
+.btn-primary:hover {
+  background: #fff8ea;
+}
+
+.field {
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--bg);
+  color: var(--text);
+}
+
+.field:focus {
+  border-color: var(--border-strong);
+}
+
+.link {
+  text-decoration: underline;
+  text-decoration-color: var(--border-strong);
+  text-underline-offset: 4px;
+}
+
+.link:hover {
+  text-decoration-color: var(--text);
+}
+
+/* 信号牌：仿照控制室的告警灯牌。未触发的灯不亮，关注亮琥珀色，警示亮红色 */
+.annunciator {
+  display: grid;
+  gap: 6px;
+  padding: 6px;
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  background: #0e1315;
+  box-shadow: inset 0 1px 0 #ffffff08;
+}
+
+.lamp {
+  --lamp: var(--faint);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-height: 7.5rem;
+  padding: 0.7rem 0.8rem 0.65rem;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: linear-gradient(180deg, var(--raised), var(--panel));
+  transition: border-color 0.15s, transform 0.15s;
+}
+
+.lamp:hover {
+  border-color: var(--border-strong);
+}
+
+.lamp-normal {
+  --lamp: var(--up);
+}
+
+.lamp-watch,
+.lamp-warning {
+  border-color: color-mix(in srgb, var(--lamp) 70%, transparent);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--lamp) 22%, var(--raised)), color-mix(in srgb, var(--lamp) 9%, var(--panel)));
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--lamp) 25%, transparent),
+    0 0 22px -4px color-mix(in srgb, var(--lamp) 45%, transparent),
+    inset 0 1px 0 color-mix(in srgb, var(--lamp) 40%, transparent);
+}
+
+.lamp-watch {
+  --lamp: var(--warn);
+}
+
+.lamp-warning {
+  --lamp: var(--down);
+}
+
+.lamp-watch:hover,
+.lamp-warning:hover {
+  border-color: var(--lamp);
+}
+
+.lamp-insufficient {
+  border-style: dashed;
+  background: var(--panel);
+}
+
+.lamp-state {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  color: var(--lamp);
+}
+
+.lamp-state::before {
+  content: "";
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--lamp);
+}
+
+.lamp-watch .lamp-state::before,
+.lamp-warning .lamp-state::before {
+  box-shadow: 0 0 8px var(--lamp);
+}
+
+.lamp-insufficient .lamp-state::before {
+  background: transparent;
+  border: 1px dashed var(--lamp);
+}
+
+/* 打开页面时按顺序点亮一次，模拟灯牌自检；减少动态效果时不播放 */
+@media (prefers-reduced-motion: no-preference) {
+  .lamp {
+    animation: lamp-in 0.4s both;
+    animation-delay: calc(var(--i, 0) * 35ms);
+  }
+
+  @keyframes lamp-in {
+    from {
+      opacity: 0;
+      transform: translateY(3px);
+    }
+  }
+}
+
+/* 宏观页的分节导航吸附在顶部 */
+.subnav {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: color-mix(in srgb, var(--bg) 88%, transparent);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--border);
+}
+
+.font-display {
+  font-family: var(--font-display), serif;
 }

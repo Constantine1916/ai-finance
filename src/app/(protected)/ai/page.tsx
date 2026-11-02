@@ -18,7 +18,7 @@ const pct = (v: number | null, digits = 1) => (v === null ? "—" : `${v >= 0 ? 
 const tone = (v: number | null) => (v === null ? "text-[var(--muted)]" : v >= 0 ? "text-[var(--up)]" : "text-[var(--down)]");
 const fmt = (d: Date) => new Intl.DateTimeFormat("zh-CN", { timeZone: "Asia/Shanghai", dateStyle: "short", timeStyle: "short" }).format(d);
 const etTime = (d: Date) => new Intl.DateTimeFormat("zh-CN", { timeZone: "America/New_York", hour: "2-digit", minute: "2-digit", hour12: false }).format(d);
-const input = "rounded border border-[var(--border)] bg-[var(--bg)] px-2 py-1";
+const input = "field px-2 py-1";
 const th = "px-2 py-1 font-normal text-[var(--muted)]";
 
 function ratioCell(v: { value: number | null; status: string } | null, annual: boolean, filling: boolean) {
@@ -48,47 +48,48 @@ export default async function AiPage({ searchParams }: { searchParams: Promise<{
   };
 
   return (
-    <main className="mx-auto max-w-7xl px-4 py-8">
-      <h1 className="text-2xl font-semibold">AI 产业周期</h1>
-      <p className="mt-2 text-sm text-[var(--muted)]">需求端看云厂商资本开支与云收入，供给端看台积电与半导体工业产出，个股看营收增速、毛利率与存货。分层与周期分类是人工标签，不是指数成分或投资建议。</p>
+    <main className="mx-auto max-w-7xl px-4 pb-16 pt-8">
+      <p className="eyebrow">来源 SEC EDGAR · 台积电 6-K · FRED · Tiingo</p>
+      <h1 className="page-title mt-2">AI 产业周期</h1>
+      <p className="page-lede">需求端看云厂商资本开支与云收入，供给端看台积电与半导体工业产出，个股看营收增速、毛利率与存货。分层与周期分类是人工标签，不是指数成分或投资建议。</p>
       {msg && <p className="mt-2 text-sm text-[var(--up)]">{msg}</p>}
       {error && (
         <p role="alert" className="mt-2 text-sm text-[var(--down)]">
           {error}
         </p>
       )}
-      <nav className="mt-3 flex flex-wrap gap-3 text-sm text-[var(--muted)]">
+      <nav aria-label="板块" className="subnav mt-4 flex gap-1 overflow-x-auto text-sm">
         {[["demand", "需求端"], ["supply", "供给与领先指标"], ["universe", "关注池"], ["cyclical", "周期股视图"]].map(([id, name]) => (
-          <a key={id} href={`#${id}`} className="hover:text-[var(--text)]">
+          <a key={id} href={`#${id}`} className="whitespace-nowrap px-2 py-2.5 text-[var(--muted)] hover:text-[var(--text)]">
             {name}
           </a>
         ))}
       </nav>
 
-      <section id="demand" className="mt-8 scroll-mt-4">
-        <h2 className="text-lg font-semibold">需求端</h2>
+      <section id="demand" className="mt-8 scroll-mt-14">
+        <h2 className="section-title">需求端</h2>
         {pendingQuarter && (
-          <p className="mt-2 text-sm text-[var(--muted)]">
+          <p className="page-lede">
             {pendingQuarter.cq} 尚不完整，未计入合计：已申报 {Object.keys(pendingQuarter.byCompany).join("、") || "无"}；尚缺 {pendingQuarter.missing.join("、")}。
           </p>
         )}
         <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-2">{["ai-capex", "ai-capex-yoy", "ai-cloud-growth"].map(chart)}</div>
       </section>
 
-      <section id="supply" className="mt-10 scroll-mt-4">
-        <h2 className="text-lg font-semibold">供给与领先指标</h2>
+      <section id="supply" className="mt-10 scroll-mt-14">
+        <h2 className="section-title">供给与领先指标</h2>
         <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-2">{["ai-tsmc", "ai-tsmc-yoy", "ai-semis-ip"].map(chart)}</div>
       </section>
 
-      <section id="universe" className="mt-10 scroll-mt-4">
-        <h2 className="text-lg font-semibold">关注池（{rows.length}）</h2>
+      <section id="universe" className="mt-10 scroll-mt-14">
+        <h2 className="section-title">关注池（{rows.length}）</h2>
         <p className="mt-1 text-xs text-[var(--muted)]">相对强弱为近 3 个月涨跌减去 SOXX 或 SPY 同期涨跌（百分点）。营收同比与毛利率为最新一期财报；交易时段内最新价为盘中暂定价。</p>
         {LAYERS.map((layer) => {
           const inLayer = rows.filter((r) => r.layer === layer.id);
           if (inLayer.length === 0) return null;
           return (
-            <div key={layer.id} className="mt-4 overflow-x-auto rounded border border-[var(--border)] bg-[var(--panel)] p-3">
-              <h3 className="font-medium">{layer.name}</h3>
+            <div key={layer.id} className="mt-4 overflow-x-auto panel">
+              <h3 className="panel-title">{layer.name}</h3>
               <table className="mt-2 w-full min-w-[1080px] text-sm">
                 <thead>
                   <tr className="text-xs">
@@ -113,7 +114,7 @@ export default async function AiPage({ searchParams }: { searchParams: Promise<{
                     return (
                       <tr key={r.symbol} className="border-t border-[var(--border)] align-top">
                         <td className="px-2 py-1.5">
-                          <Link href={`/stocks/${r.symbol}`} className="font-medium underline decoration-[var(--border)] underline-offset-4">
+                          <Link href={`/stocks/${r.symbol}`} className="font-medium link">
                             {r.symbol}
                           </Link>
                           <span className="block max-w-48 truncate text-xs text-[var(--muted)]">{r.name}</span>
@@ -170,7 +171,7 @@ export default async function AiPage({ searchParams }: { searchParams: Promise<{
                             <form method="post" action="/api/universe" className="mt-1">
                               <input type="hidden" name="action" value="remove" />
                               <input type="hidden" name="symbol" value={r.symbol} />
-                              <button type="submit" className="text-xs text-[var(--down)] underline">
+                              <button type="submit" className="text-xs text-[var(--down)] link">
                                 移出关注池
                               </button>
                             </form>
@@ -185,8 +186,8 @@ export default async function AiPage({ searchParams }: { searchParams: Promise<{
           );
         })}
 
-        <div className="mt-4 rounded border border-[var(--border)] bg-[var(--panel)] p-3">
-          <h3 className="font-medium">加入证券</h3>
+        <div className="mt-4 panel">
+          <h3 className="panel-title">加入证券</h3>
           <form method="post" action="/api/universe" className="mt-2 flex flex-wrap items-end gap-3 text-sm">
             <input type="hidden" name="action" value="add" />
             <label className="grid gap-1">
@@ -216,7 +217,7 @@ export default async function AiPage({ searchParams }: { searchParams: Promise<{
             <label className="flex items-center gap-1 pb-1">
               <input type="checkbox" name="inHyperscalerCapex" /> 计入资本开支合计
             </label>
-            <button type="submit" className="rounded bg-[var(--text)] px-3 py-1 text-[var(--bg)]">
+            <button type="submit" className="btn-primary">
               加入
             </button>
           </form>
@@ -236,13 +237,13 @@ export default async function AiPage({ searchParams }: { searchParams: Promise<{
         </div>
       </section>
 
-      <section id="cyclical" className="mt-10 scroll-mt-4">
-        <h2 className="text-lg font-semibold">周期股视图</h2>
+      <section id="cyclical" className="mt-10 scroll-mt-14">
+        <h2 className="section-title">周期股视图</h2>
         <p className="mt-1 text-sm text-[var(--muted)]">
           强周期股在盈利高峰时市盈率最低、看起来最便宜，往往正是周期顶部；亏损时市盈率最高或无法计算，反而常在底部。这里改看毛利率、存货天数与市净率在 2010 年以来历史中的位置。
         </p>
-        <div className="mt-3 overflow-x-auto rounded border border-[var(--border)] bg-[var(--panel)] p-3">
-          <table className="w-full min-w-[760px] text-sm">
+        <div className="mt-3 overflow-x-auto panel">
+          <table className="tbl w-full min-w-[760px] text-sm">
             <thead>
               <tr className="text-xs">
                 <th className={`${th} text-left`}>代码</th>
@@ -260,7 +261,7 @@ export default async function AiPage({ searchParams }: { searchParams: Promise<{
                 return (
                   <tr key={c.symbol} className="border-t border-[var(--border)]">
                     <td className="px-2 py-1">
-                      <Link href={`/stocks/${c.symbol}`} className="underline decoration-[var(--border)] underline-offset-4">
+                      <Link href={`/stocks/${c.symbol}`} className="link">
                         {c.symbol}
                       </Link>
                     </td>

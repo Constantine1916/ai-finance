@@ -23,3 +23,14 @@
 ## 数据与组件服务
 
 FRED 上的第三方序列（S&P、Nasdaq、ICE 等）、日线行情供应商、台积电、TradingView 的名称及数据由相应权利人持有。代码许可不授予其数据的再分发权。使用条件见 [数据源说明](docs/data-sources.md)。后续实际安装依赖时另核对依赖许可；目前尚无应用依赖锁文件。
+
+## 字体
+
+界面字体通过 `next/font/google` 在构建时下载并随站点自托管，不引用 Google 的字体服务器：
+
+| 字体 | 用途 | 许可 |
+| --- | --- | --- |
+| [Noto Serif SC](https://fonts.google.com/noto/specimen/Noto+Serif+SC)（Google、Adobe） | 页面与分区标题 | SIL Open Font License 1.1 |
+| [IBM Plex Mono](https://fonts.google.com/specimen/IBM+Plex+Mono)（IBM） | 数值、代码、日期 | SIL Open Font License 1.1 |
+
+正文使用系统中文字体，不随站点分发。

@@ -16,7 +16,7 @@ const statusText: Record<string, string> = { success: "成功", failed: "失败"
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <section className="mt-8">
-      <h2 className="text-lg font-semibold">{title}</h2>
+      <h2 className="section-title">{title}</h2>
       <div className="mt-3 overflow-x-auto">{children}</div>
     </section>
   );
@@ -40,8 +40,8 @@ export default async function DataHealthPage({ searchParams }: { searchParams: P
   const problems = fresh.filter((f) => f.state !== "fresh");
 
   return (
-    <main className="mx-auto max-w-6xl px-4 py-8 text-sm">
-      <h1 className="text-2xl font-semibold">数据健康</h1>
+    <main className="mx-auto max-w-7xl px-4 pb-16 pt-8 text-sm">
+      <h1 className="page-title">数据健康</h1>
       {msg && <p className="mt-3 text-[var(--up)]">{msg}</p>}
       {error && (
         <p role="alert" className="mt-3 text-[var(--down)]">
@@ -62,7 +62,7 @@ export default async function DataHealthPage({ searchParams }: { searchParams: P
         {runs.length === 0 ? (
           <p className="text-[var(--muted)]">尚无运行记录。</p>
         ) : (
-          <table className="w-full">
+          <table className="tbl w-full">
             <thead>
               <tr>
                 <th className={th}>任务</th>
@@ -77,7 +77,7 @@ export default async function DataHealthPage({ searchParams }: { searchParams: P
                   <td className={td}>{r.job}</td>
                   <td className={td}>{statusText[r.latest.status] ?? r.latest.status}</td>
                   <td className={td}>{fmt(r.lastSuccess?.finishedAt)}</td>
-                  <td className={`${td} whitespace-pre-wrap text-[var(--down)]`}>
+                  <td className={`${td} whitespace-pre-wrap ${r.lastFailure ? "text-[var(--down)]" : "text-[var(--muted)]"}`}>
                     {r.lastFailure ? `${fmt(r.lastFailure.finishedAt)}\n${r.lastFailure.error ?? ""}` : "—"}
                   </td>
                 </tr>
@@ -91,7 +91,7 @@ export default async function DataHealthPage({ searchParams }: { searchParams: P
         {pending.length === 0 ? (
           <p className="text-[var(--muted)]">没有待确认的数据。</p>
         ) : (
-          <table className="w-full">
+          <table className="tbl w-full">
             <thead>
               <tr>
                 <th className={th}>序列</th>
@@ -112,7 +112,7 @@ export default async function DataHealthPage({ searchParams }: { searchParams: P
                   </td>
                   <td className={td}>{(p.issues as { message: string }[]).map((i) => i.message).join("；")}</td>
                   <td className={td}>
-                    <a href={p.sourceRef} className="underline" target="_blank" rel="noreferrer">
+                    <a href={p.sourceRef} className="link" target="_blank" rel="noreferrer">
                       原始链接
                     </a>
                   </td>
@@ -122,7 +122,7 @@ export default async function DataHealthPage({ searchParams }: { searchParams: P
                         <input type="hidden" name="seriesId" value={p.seriesId} />
                         <input type="hidden" name="obsDate" value={p.obsDate} />
                         <input type="hidden" name="action" value={action} />
-                        <button type="submit" className="mr-2 underline">
+                        <button type="submit" className="mr-2 link">
                           {action === "confirm" ? "确认" : "删除"}
                         </button>
                       </form>
@@ -139,7 +139,7 @@ export default async function DataHealthPage({ searchParams }: { searchParams: P
         {problems.length === 0 ? (
           <p className="text-[var(--muted)]">{fresh.length === 0 ? "尚未登记任何序列。" : "所有序列都在预期时间内更新。"}</p>
         ) : (
-          <table className="w-full">
+          <table className="tbl w-full">
             <thead>
               <tr>
                 <th className={th}>序列</th>
@@ -171,7 +171,7 @@ export default async function DataHealthPage({ searchParams }: { searchParams: P
           <form method="post" action="/api/manual-entries" className="grid max-w-xl gap-3">
             <label className="grid gap-1">
               序列
-              <select name="seriesId" required className="rounded border border-[var(--border)] bg-[var(--panel)] px-2 py-1">
+              <select name="seriesId" required className="field px-2 py-1">
                 {manualSeries.map((s) => (
                   <option key={s.id} value={s.id}>
                     {s.nameZh}（{s.unit}）
@@ -181,25 +181,25 @@ export default async function DataHealthPage({ searchParams }: { searchParams: P
             </label>
             <label className="grid gap-1">
               数据日期
-              <input name="obsDate" type="date" required className="rounded border border-[var(--border)] bg-[var(--panel)] px-2 py-1" />
+              <input name="obsDate" type="date" required className="field px-2 py-1" />
             </label>
             <label className="grid gap-1">
               数值
-              <input name="value" inputMode="decimal" required className="rounded border border-[var(--border)] bg-[var(--panel)] px-2 py-1" />
+              <input name="value" inputMode="decimal" required className="field px-2 py-1" />
             </label>
             <label className="grid gap-1">
               单位（须与序列登记单位一致）
-              <input name="unit" required className="rounded border border-[var(--border)] bg-[var(--panel)] px-2 py-1" />
+              <input name="unit" required className="field px-2 py-1" />
             </label>
             <label className="grid gap-1">
               来源链接（必填）
-              <input name="sourceUrl" type="url" required placeholder="https://" className="rounded border border-[var(--border)] bg-[var(--panel)] px-2 py-1" />
+              <input name="sourceUrl" type="url" required placeholder="https://" className="field px-2 py-1" />
             </label>
             <label className="grid gap-1">
               备注
-              <input name="note" className="rounded border border-[var(--border)] bg-[var(--panel)] px-2 py-1" />
+              <input name="note" className="field px-2 py-1" />
             </label>
-            <button type="submit" className="w-fit rounded bg-[var(--text)] px-3 py-1 text-[var(--bg)]">
+            <button type="submit" className="w-fit btn-primary">
               保存
             </button>
           </form>

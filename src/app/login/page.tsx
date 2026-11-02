@@ -14,23 +14,23 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
 
   return (
     <main className="mx-auto flex min-h-screen max-w-sm flex-col justify-center px-4">
-      <h1 className="text-xl font-semibold">AI Finance 看板</h1>
-      <p className="mt-1 text-sm text-[var(--muted)]">仅限所有者登录</p>
+      <p className="eyebrow">AI FINANCE · 仅限所有者</p>
+      <h1 className="page-title mt-2">登录看板</h1>
       {message && (
-        <p role="alert" className="mt-4 rounded border border-[var(--warn)] px-3 py-2 text-sm text-[var(--warn)]">
+        <p role="alert" className="mt-4 rounded border border-[var(--warn)] bg-[color-mix(in_srgb,var(--warn)_10%,transparent)] px-3 py-2 text-sm text-[var(--warn)]">
           {message}
         </p>
       )}
       <form method="post" action="/api/auth/login" className="mt-6 flex flex-col gap-3">
         <label className="flex flex-col gap-1 text-sm">
           用户名
-          <input name="username" autoComplete="username" required className="rounded border border-[var(--border)] bg-[var(--panel)] px-3 py-2" />
+          <input name="username" autoComplete="username" required className="field px-3 py-2" />
         </label>
         <label className="flex flex-col gap-1 text-sm">
           密码
-          <input name="password" type="password" autoComplete="current-password" required className="rounded border border-[var(--border)] bg-[var(--panel)] px-3 py-2" />
+          <input name="password" type="password" autoComplete="current-password" required className="field px-3 py-2" />
         </label>
-        <button type="submit" className="mt-2 rounded bg-[var(--text)] px-3 py-2 text-sm font-medium text-[var(--bg)]">
+        <button type="submit" className="mt-2 btn-primary py-2">
           登录
         </button>
       </form>

@@ -5,7 +5,7 @@ import { requireOwner } from "@/lib/auth/guard";
 
 export const dynamic = "force-dynamic";
 
-const input = "rounded border border-[var(--border)] bg-[var(--bg)] px-2 py-1";
+const input = "field px-2 py-1";
 
 export default async function CalendarPage({ searchParams }: { searchParams: Promise<{ msg?: string; error?: string }> }) {
   await requireOwner();
@@ -16,9 +16,9 @@ export default async function CalendarPage({ searchParams }: { searchParams: Pro
   const upcoming = rows.filter((r) => r.scheduledAt > now);
 
   return (
-    <main className="mx-auto max-w-6xl px-4 py-8">
-      <h1 className="text-2xl font-semibold">事件日历</h1>
-      <p className="mt-2 text-sm text-[var(--muted)]">
+    <main className="mx-auto max-w-7xl px-4 pb-16 pt-8">
+      <h1 className="page-title">事件日历</h1>
+      <p className="page-lede">
         FOMC 来自美联储日历，PCE 来自 BEA 发布日历，CPI、非农与初请失业金来自 FRED 收录的官方发布日期（时间按惯例美东 8:30）。采集进程每天同步一次，发布当天自动追加采集。
       </p>
       {msg && <p className="mt-2 text-sm text-[var(--up)]">{msg}</p>}
@@ -28,13 +28,13 @@ export default async function CalendarPage({ searchParams }: { searchParams: Pro
         </p>
       )}
 
-      <section className="mt-6 rounded border border-[var(--border)] bg-[var(--panel)] p-3">
-        <h2 className="font-medium">未来 90 天（{upcoming.length}）</h2>
+      <section className="mt-6 panel">
+        <h2 className="panel-title">未来 90 天（{upcoming.length}）</h2>
         <EventTable rows={upcoming} allowDelete />
       </section>
 
-      <section className="mt-4 rounded border border-[var(--border)] bg-[var(--panel)] p-3">
-        <h2 className="font-medium">添加财报日期</h2>
+      <section className="mt-4 panel">
+        <h2 className="panel-title">添加财报日期</h2>
         <form method="post" action="/api/events" className="mt-3 flex flex-wrap items-end gap-3 text-sm">
           <label className="grid gap-1">
             代码
@@ -63,14 +63,14 @@ export default async function CalendarPage({ searchParams }: { searchParams: Pro
           <label className="flex items-center gap-1 pb-1">
             <input name="confirmed" type="checkbox" defaultChecked /> 公司已确认
           </label>
-          <button type="submit" className="rounded bg-[var(--text)] px-3 py-1 text-[var(--bg)]">
+          <button type="submit" className="btn-primary">
             保存
           </button>
         </form>
       </section>
 
-      <section className="mt-4 rounded border border-[var(--border)] bg-[var(--panel)] p-3">
-        <h2 className="font-medium">过去 30 天</h2>
+      <section className="mt-4 panel">
+        <h2 className="panel-title">过去 30 天</h2>
         <EventTable rows={past} />
       </section>
     </main>

@@ -21,23 +21,24 @@ export default async function MacroPage() {
   const metaFor = (spec: ChartSpec) => [...new Set(spec.lines.flatMap(lineSourceIds))].map((id) => metas.find((m) => m.id === id)).filter((m): m is SourceMeta => Boolean(m));
 
   return (
-    <main className="mx-auto max-w-7xl px-4 py-8">
-      <h1 className="text-2xl font-semibold">宏观看板</h1>
-      <nav className="mt-3 flex flex-wrap gap-3 text-sm text-[var(--muted)]">
+    <main className="mx-auto max-w-7xl px-4 pb-16 pt-8">
+      <p className="eyebrow">来源 FRED · 美国财政部 · BLS · BEA · Tiingo</p>
+      <h1 className="page-title mt-2">宏观看板</h1>
+      <nav aria-label="板块" className="subnav mt-4 flex gap-1 overflow-x-auto text-sm">
         {SECTIONS.map((s) => (
-          <a key={s.id} href={`#${s.id}`} className="hover:text-[var(--text)]">
+          <a key={s.id} href={`#${s.id}`} className="whitespace-nowrap px-2 py-2.5 text-[var(--muted)] hover:text-[var(--text)]">
             {s.title}
           </a>
         ))}
       </nav>
 
       {SECTIONS.map((section) => (
-        <section key={section.id} id={section.id} className="mt-10 scroll-mt-4">
-          <h2 className="text-lg font-semibold">{section.title}</h2>
+        <section key={section.id} id={section.id} className="mt-10 scroll-mt-14">
+          <h2 className="section-title">{section.title}</h2>
 
           {section.id === "rates" && curves.length > 0 && (
-            <article className="mt-4 rounded border border-[var(--border)] bg-[var(--panel)] p-3">
-              <h3 className="font-medium">
+            <article className="mt-4 panel">
+              <h3 className="panel-title">
                 收益率曲线 <span className="text-xs font-normal text-[var(--muted)]">%</span>
               </h3>
               <p className="mt-1 text-xs text-[var(--muted)]">最新、约 3 个月前、约 12 个月前（各取不晚于目标日期、所有期限都有数据的最近交易日）。来源：FRED，最新交易日取自美国财政部。</p>
@@ -46,8 +47,8 @@ export default async function MacroPage() {
           )}
 
           {section.id === "market" && (
-            <div className="mt-4 overflow-x-auto rounded border border-[var(--border)] bg-[var(--panel)] p-3">
-              <table className="w-full min-w-[640px] text-sm">
+            <div className="mt-4 overflow-x-auto panel">
+              <table className="tbl w-full min-w-[640px] text-sm">
                 <thead>
                   <tr className="text-xs text-[var(--muted)]">
                     <th className="px-2 py-1 text-left font-normal">代码</th>

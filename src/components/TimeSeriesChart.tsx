@@ -7,12 +7,9 @@ import * as echarts from "echarts/core";
 import { CanvasRenderer } from "echarts/renderers";
 import type { ChartData } from "@/macro/build";
 import { RANGE_LABEL, RANGES, type Annotation, type Range } from "@/macro/charts";
+import { axisLabel, INK, monoFamily, SERIES_COLORS, tooltipStyle } from "./chartTheme";
 
 echarts.use([LineChart, GridComponent, TooltipComponent, LegendComponent, MarkAreaComponent, MarkLineComponent, CanvasRenderer]);
-
-// 分类色：按固定顺序分配，深色背景下已通过色觉缺陷与对比度校验（#121821 面板）
-const SERIES_COLORS = ["#3987e5", "#d95926", "#199e70", "#c98500"];
-const INK = { primary: "#e6edf3", muted: "#8b98a5", grid: "#1f2a37", reference: "#5b6876" };
 
 export interface ChartMeta {
   id: string;
@@ -51,14 +48,12 @@ function buildOption(meta: ChartMeta, data: ChartData): echarts.EChartsCoreOptio
     legend: data.lines.length > 1 ? { top: 0, left: 0, textStyle: { color: INK.muted, fontSize: 12 }, itemWidth: 14, itemHeight: 2, icon: "rect" } : undefined,
     tooltip: {
       trigger: "axis",
-      axisPointer: { type: "line", lineStyle: { color: INK.reference } },
-      backgroundColor: "#0b0f14",
-      borderColor: INK.grid,
-      textStyle: { color: INK.primary, fontSize: 12 },
+      axisPointer: { type: "line", lineStyle: { color: INK.faint } },
+      ...tooltipStyle(),
       valueFormatter: (v: unknown) => `${fmt(typeof v === "number" ? v : null)} ${meta.unit}`,
     },
-    xAxis: { type: "time", axisLine: { lineStyle: { color: INK.grid } }, axisLabel: { color: INK.muted, hideOverlap: true }, splitLine: { show: false } },
-    yAxis: { type: "value", scale: true, axisLabel: { color: INK.muted, formatter: (v: number) => fmt(v) }, splitLine: { lineStyle: { color: INK.grid } } },
+    xAxis: { type: "time", axisLine: { lineStyle: { color: INK.grid } }, axisLabel: axisLabel({ hideOverlap: true }), splitLine: { show: false } },
+    yAxis: { type: "value", scale: true, axisLabel: axisLabel({ formatter: (v: number) => fmt(v) }), splitLine: { lineStyle: { color: INK.grid } } },
     series: data.lines.map((line, i) => ({
       name: line.label,
       type: "line",
@@ -67,11 +62,11 @@ function buildOption(meta: ChartMeta, data: ChartData): echarts.EChartsCoreOptio
       connectNulls: false,
       lineStyle: { width: 2, color: SERIES_COLORS[i % SERIES_COLORS.length] },
       itemStyle: { color: SERIES_COLORS[i % SERIES_COLORS.length] },
-      endLabel: data.lines.length <= 4 ? { show: true, color: INK.primary, fontSize: 11, formatter: (p: { value: [string, number | null] }) => fmt(p.value[1]) } : undefined,
+      endLabel: data.lines.length <= 4 ? { show: true, color: INK.primary, fontSize: 11, fontFamily: monoFamily(), formatter: (p: { value: [string, number | null] }) => fmt(p.value[1]) } : undefined,
       labelLayout: { moveOverlap: "shiftY" },
       markLine:
         i === 0 && thresholds.length
-          ? { silent: true, symbol: "none", lineStyle: { color: INK.reference, type: "dashed", width: 1 }, label: { color: INK.muted, formatter: "{b}", position: "insideStartTop" }, data: thresholds.map((t) => ({ yAxis: t.value, name: t.label })) }
+          ? { silent: true, symbol: "none", lineStyle: { color: INK.faint, type: "dashed", width: 1 }, label: { color: INK.muted, formatter: "{b}", position: "insideStartTop" }, data: thresholds.map((t) => ({ yAxis: t.value, name: t.label })) }
           : undefined,
       markArea:
         i === 0 && shades.length
@@ -141,21 +136,19 @@ export default function TimeSeriesChart({ meta }: { meta: ChartMeta }) {
 
   return (
     <div>
-      <div className="flex flex-wrap items-center gap-1 text-xs">
-        {RANGES.map((r) => (
-          <button
-            key={r}
-            type="button"
-            onClick={() => setRange(r)}
-            aria-pressed={r === range}
-            className={`rounded px-2 py-0.5 ${r === range ? "bg-[var(--border)] text-[var(--text)]" : "text-[var(--muted)] hover:text-[var(--text)]"}`}
-          >
-            {RANGE_LABEL[r]}
+      <div className="flex flex-wrap items-center gap-2">
+        <div className="seg" role="group" aria-label="时间区间">
+          {RANGES.map((r) => (
+            <button key={r} type="button" onClick={() => setRange(r)} aria-pressed={r === range}>
+              {RANGE_LABEL[r]}
+            </button>
+          ))}
+        </div>
+        <div className="seg ml-auto">
+          <button type="button" onClick={() => setTable((t) => !t)} aria-pressed={table}>
+            表格
           </button>
-        ))}
-        <button type="button" onClick={() => setTable((t) => !t)} className="ml-auto rounded px-2 py-0.5 text-[var(--muted)] hover:text-[var(--text)]">
-          {table ? "图表" : "表格"}
-        </button>
+        </div>
       </div>
       {error && <p className="mt-2 text-xs text-[var(--down)]">{error}</p>}
       {data && (data.historyLimited.length > 0 || data.downsampled || data.events.length > 0) && (
@@ -176,7 +169,7 @@ export default function TimeSeriesChart({ meta }: { meta: ChartMeta }) {
       {empty && <p className="mt-2 text-xs text-[var(--muted)]">所选区间暂无数据。</p>}
       {table && data ? (
         <div className="mt-2 max-h-72 overflow-auto">
-          <table className="w-full text-xs">
+          <table className="tbl w-full text-xs">
             <thead>
               <tr className="text-[var(--muted)]">
                 <th className="px-1 py-0.5 text-left font-normal">日期</th>

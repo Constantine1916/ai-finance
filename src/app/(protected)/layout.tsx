@@ -1,4 +1,5 @@
 import Link from "next/link";
+import MainNav from "@/components/MainNav";
 import { requireOwner } from "@/lib/auth/guard";
 
 export const dynamic = "force-dynamic";
@@ -7,32 +8,21 @@ export default async function ProtectedLayout({ children }: { children: React.Re
   await requireOwner();
   return (
     <div className="min-h-screen">
-      <header className="flex items-center justify-between border-b border-[var(--border)] px-4 py-3">
-        <nav className="flex items-center gap-4 text-sm">
-          <Link href="/" className="font-semibold">
-            AI Finance
+      <header className="border-b border-[var(--border)] bg-[var(--panel)]">
+        <div className="mx-auto flex max-w-7xl items-stretch gap-3 px-4 sm:gap-6">
+          <Link href="/" aria-label="AI Finance 总览" className="mono flex shrink-0 items-center gap-2 whitespace-nowrap text-[13px] font-semibold tracking-[0.18em]">
+            <span aria-hidden className="inline-block h-2 w-2 rounded-full bg-[var(--text)]" />
+            <span className="hidden sm:inline">AI FINANCE</span>
           </Link>
-          <Link href="/" className="text-[var(--muted)] hover:text-[var(--text)]">
-            总览
-          </Link>
-          <Link href="/macro" className="text-[var(--muted)] hover:text-[var(--text)]">
-            宏观
-          </Link>
-          <Link href="/ai" className="text-[var(--muted)] hover:text-[var(--text)]">
-            AI 产业
-          </Link>
-          <Link href="/calendar" className="text-[var(--muted)] hover:text-[var(--text)]">
-            日历
-          </Link>
-          <Link href="/data" className="text-[var(--muted)] hover:text-[var(--text)]">
-            数据健康
-          </Link>
-        </nav>
-        <form method="post" action="/api/auth/logout">
-          <button type="submit" className="text-sm text-[var(--muted)] hover:text-[var(--text)]">
-            退出
-          </button>
-        </form>
+          <div className="min-w-0 flex-1">
+            <MainNav />
+          </div>
+          <form method="post" action="/api/auth/logout" className="flex shrink-0 items-center">
+            <button type="submit" className="text-sm text-[var(--muted)] hover:text-[var(--text)]">
+              退出
+            </button>
+          </form>
+        </div>
       </header>
       {children}
     </div>

@@ -25,10 +25,10 @@ export default async function StockPage({ params }: { params: Promise<{ symbol: 
   // 不在关注池中的代码：只显示未收录，不向任何供应商请求
   if (!info) {
     return (
-      <main className="mx-auto max-w-5xl px-4 py-8">
-        <h1 className="text-2xl font-semibold">未收录</h1>
+      <main className="mx-auto max-w-7xl px-4 pb-16 pt-8">
+        <h1 className="page-title">未收录</h1>
         <p className="mt-2 text-[var(--muted)]">“{decodeURIComponent(symbol).slice(0, 12)}”不在关注池中。可以在 AI 产业页的关注池中加入。</p>
-        <Link href="/ai#universe" className="mt-3 inline-block underline">
+        <Link href="/ai#universe" className="mt-3 inline-block link">
           前往关注池
         </Link>
       </main>
@@ -50,12 +50,12 @@ export default async function StockPage({ params }: { params: Promise<{ symbol: 
   const layer = LAYERS.find((l) => l.id === info.layer)?.name ?? info.layer;
 
   return (
-    <main className="mx-auto max-w-7xl px-4 py-8">
+    <main className="mx-auto max-w-7xl px-4 pb-16 pt-8">
       <Link href="/ai#universe" className="text-sm text-[var(--muted)] hover:text-[var(--text)]">
         ← 关注池
       </Link>
-      <h1 className="mt-2 text-2xl font-semibold">
-        {info.symbol} <span className="text-base font-normal text-[var(--muted)]">{info.name}</span>
+      <h1 className="page-title mt-2">
+        <span className="mono font-semibold tracking-tight">{info.symbol}</span> <span className="text-base font-normal text-[var(--muted)]">{info.name}</span>
       </h1>
       <p className="mt-1 text-sm text-[var(--muted)]">
         {layer} · {CYCLICALITY_NAME[info.cyclicality as Cyclicality]}
@@ -89,15 +89,15 @@ export default async function StockPage({ params }: { params: Promise<{ symbol: 
         ))}
       </section>
 
-      <section className="mt-6 rounded border border-[var(--border)] bg-[var(--panel)] p-3">
-        <h2 className="font-medium">最近的定期申报</h2>
+      <section className="mt-6 panel">
+        <h2 className="panel-title">最近的定期申报</h2>
         {periodic.length === 0 ? (
           <p className="mt-2 text-sm text-[var(--muted)]">尚未记录申报。</p>
         ) : (
           <ul className="mt-2 space-y-1 text-sm">
             {periodic.map((f) => (
               <li key={f.accessionNo}>
-                <a href={f.url} target="_blank" rel="noreferrer" className="underline">
+                <a href={f.url} target="_blank" rel="noreferrer" className="link">
                   {f.form}
                 </a>{" "}
                 <span className="num text-[var(--muted)]">

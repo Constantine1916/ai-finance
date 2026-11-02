@@ -66,10 +66,10 @@ export default function TradingViewChart({ tvSymbol, height = 520 }: { tvSymbol:
               <>
                 <p>TradingView 图表未能加载（脚本可能被网络或浏览器拦截）。下方的基本面图表不受影响。</p>
                 <div className="flex gap-3">
-                  <button type="button" onClick={() => setAttempt((a) => a + 1)} className="rounded border border-[var(--border)] px-3 py-1 text-[var(--text)]">
+                  <button type="button" onClick={() => setAttempt((a) => a + 1)} className="btn">
                     重试
                   </button>
-                  <a href={externalUrl} target="_blank" rel="noreferrer" className="rounded border border-[var(--border)] px-3 py-1 text-[var(--text)]">
+                  <a href={externalUrl} target="_blank" rel="noreferrer" className="btn">
                     在 TradingView 查看
                   </a>
                 </div>
@@ -80,7 +80,7 @@ export default function TradingViewChart({ tvSymbol, height = 520 }: { tvSymbol:
       </div>
       <p className="mt-1 text-xs text-[var(--muted)]">
         K 线由{" "}
-        <a href={externalUrl} target="_blank" rel="noreferrer" className="underline">
+        <a href={externalUrl} target="_blank" rel="noreferrer" className="link">
           TradingView
         </a>{" "}
         提供，数据在浏览器中加载，本系统不提取或存储。

@@ -20,7 +20,7 @@ function groupSources(sources: SourceMeta[]) {
 export function SourceLine({ sources, now }: { sources: SourceMeta[]; now: Date }) {
   if (sources.length === 0) return null;
   return (
-    <div className="mt-1 space-y-0.5 text-xs text-[var(--muted)]">
+    <div className="space-y-0.5 text-[11.5px] leading-relaxed text-[var(--muted)]">
       {groupSources(sources).map((group) => {
         const s = group[0]!;
         const pending = group.reduce((n, g) => n + g.pending, 0);
@@ -31,7 +31,7 @@ export function SourceLine({ sources, now }: { sources: SourceMeta[]; now: Date 
               <span key={g.id}>
                 {i > 0 && "、"}
                 {g.sourceRef ? (
-                  <a href={g.sourceRef} target="_blank" rel="noreferrer" className="underline" title="打开原始数据页面">
+                  <a href={g.sourceRef} target="_blank" rel="noreferrer" className="link" title="打开原始数据页面">
                     {g.id.split(":")[1]}
                   </a>
                 ) : (
@@ -44,7 +44,7 @@ export function SourceLine({ sources, now }: { sources: SourceMeta[]; now: Date 
             {s.state === "stale" && <span className="ml-1 text-[var(--warn)]">· ⚠ 过期（最晚应于 {s.expectedBy} 更新）</span>}
             {s.state === "empty" && <span className="ml-1 text-[var(--warn)]">· 暂无数据</span>}
             {pending > 0 && (
-              <Link href="/data" className="ml-1 text-[var(--warn)] underline">
+              <Link href="/data" className="ml-1 text-[var(--warn)] link">
                 · 有 {pending} 条待确认数据
               </Link>
             )}
@@ -58,15 +58,18 @@ export function SourceLine({ sources, now }: { sources: SourceMeta[]; now: Date 
 
 export function ChartCard({ spec, sources, now }: { spec: ChartSpec; sources: SourceMeta[]; now: Date }) {
   return (
-    <article className="min-w-0 rounded border border-[var(--border)] bg-[var(--panel)] p-3">
-      <h3 className="font-medium">
-        {spec.title} <span className="text-xs font-normal text-[var(--muted)]">{spec.unit}</span>
+    <article className="panel flex flex-col">
+      <h3 className="panel-title">
+        {spec.title}
+        <span className="unit">{spec.unit}</span>
       </h3>
-      <SourceLine sources={sources} now={now} />
-      {spec.note && <p className="mt-1 text-xs text-[var(--muted)]">{spec.note}</p>}
-      <div className="mt-2">
+      {spec.note && <p className="mt-1 text-xs leading-relaxed text-[var(--muted)]">{spec.note}</p>}
+      <div className="mt-3 flex-1">
         <TimeSeriesChart meta={{ id: spec.id, title: spec.title, unit: spec.unit, annotations: spec.annotations ?? [], defaultRange: spec.defaultRange ?? "5y" }} />
       </div>
+      <footer className="mt-3 border-t border-dashed border-[var(--border)] pt-2">
+        <SourceLine sources={sources} now={now} />
+      </footer>
     </article>
   );
 }

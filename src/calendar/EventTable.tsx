@@ -22,7 +22,7 @@ export default function EventTable({ rows, allowDelete = false }: { rows: EventR
   if (rows.length === 0) return <p className="mt-2 text-sm text-[var(--muted)]">暂无日程。</p>;
   return (
     <div className="mt-2 overflow-x-auto">
-      <table className="w-full min-w-[560px] text-sm">
+      <table className="tbl w-full min-w-[560px] text-sm">
         <thead>
           <tr className="text-xs text-[var(--muted)]">
             <th className="px-2 py-1 text-left font-normal">北京时间</th>
@@ -45,20 +45,20 @@ export default function EventTable({ rows, allowDelete = false }: { rows: EventR
               <td className={`whitespace-nowrap px-2 py-1 ${statusClass[e.displayStatus]}`}>
                 {STATUS_TEXT[e.displayStatus]}
                 {e.displayStatus === "released" && KIND_LINK[e.kind] && (
-                  <Link href={KIND_LINK[e.kind]!} className="ml-1 text-xs underline">
+                  <Link href={KIND_LINK[e.kind]!} className="ml-1 text-xs link">
                     看图表
                   </Link>
                 )}
               </td>
               <td className="whitespace-nowrap px-2 py-1 text-xs">
-                <a href={e.sourceUrl} target="_blank" rel="noreferrer" className="underline">
+                <a href={e.sourceUrl} target="_blank" rel="noreferrer" className="link">
                   {e.origin === "manual" ? "人工录入" : "官方日程"}
                 </a>
                 {allowDelete && e.origin === "manual" && (
                   <form method="post" action="/api/events" className="inline">
                     <input type="hidden" name="action" value="delete" />
                     <input type="hidden" name="key" value={e.key} />
-                    <button type="submit" className="ml-2 text-[var(--muted)] underline">
+                    <button type="submit" className="ml-2 text-[var(--muted)] link">
                       删除
                     </button>
                   </form>

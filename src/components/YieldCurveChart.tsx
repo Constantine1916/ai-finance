@@ -6,9 +6,9 @@ import { GridComponent, LegendComponent, TooltipComponent } from "echarts/compon
 import * as echarts from "echarts/core";
 import { CanvasRenderer } from "echarts/renderers";
 
-echarts.use([LineChart, GridComponent, TooltipComponent, LegendComponent, CanvasRenderer]);
+import { axisLabel, INK, SERIES_COLORS, tooltipStyle } from "./chartTheme";
 
-const SERIES_COLORS = ["#3987e5", "#d95926", "#199e70"];
+echarts.use([LineChart, GridComponent, TooltipComponent, LegendComponent, CanvasRenderer]);
 
 export interface Curve {
   label: string;
@@ -25,10 +25,10 @@ export default function YieldCurveChart({ tenors, curves }: { tenors: string[]; 
     chart.setOption({
       animation: false,
       grid: { left: 8, right: 16, top: 36, bottom: 8, containLabel: true },
-      legend: { top: 0, left: 0, textStyle: { color: "#8b98a5", fontSize: 12 }, icon: "rect", itemWidth: 14, itemHeight: 2, itemStyle: { borderWidth: 0 } },
-      tooltip: { trigger: "axis", backgroundColor: "#0b0f14", borderColor: "#1f2a37", textStyle: { color: "#e6edf3", fontSize: 12 }, valueFormatter: (v: unknown) => `${Number(v).toFixed(2)}%` },
-      xAxis: { type: "category", data: tenors, axisLine: { lineStyle: { color: "#1f2a37" } }, axisLabel: { color: "#8b98a5" } },
-      yAxis: { type: "value", scale: true, axisLabel: { color: "#8b98a5", formatter: "{value}%" }, splitLine: { lineStyle: { color: "#1f2a37" } } },
+      legend: { top: 0, left: 0, textStyle: { color: INK.muted, fontSize: 12 }, icon: "rect", itemWidth: 14, itemHeight: 2, itemStyle: { borderWidth: 0 } },
+      tooltip: { trigger: "axis", ...tooltipStyle(), valueFormatter: (v: unknown) => `${Number(v).toFixed(2)}%` },
+      xAxis: { type: "category", data: tenors, axisLine: { lineStyle: { color: INK.grid } }, axisLabel: axisLabel() },
+      yAxis: { type: "value", scale: true, axisLabel: axisLabel({ formatter: "{value}%" }), splitLine: { lineStyle: { color: INK.grid } } },
       series: curves.map((c, i) => ({
         name: `${c.label}（${c.date}）`,
         type: "line",
@@ -36,7 +36,7 @@ export default function YieldCurveChart({ tenors, curves }: { tenors: string[]; 
         symbol: "circle",
         symbolSize: 8,
         lineStyle: { width: 2, color: SERIES_COLORS[i] },
-        itemStyle: { color: SERIES_COLORS[i], borderColor: "#121821", borderWidth: 2 },
+        itemStyle: { color: SERIES_COLORS[i], borderColor: INK.panel, borderWidth: 2 },
       })),
     });
     const resize = () => chart.resize();
