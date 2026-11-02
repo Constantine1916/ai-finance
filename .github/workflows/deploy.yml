@@ -45,4 +45,15 @@ jobs:
       - name: 在 VPS 上运行 deploy.sh
         env:
           DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
-        run: ssh -i ~/.ssh/deploy_key -o BatchMode=yes -o StrictHostKeyChecking=yes "root@$DEPLOY_HOST"
+        # 公网 SSH 常被暴力扫描占满 MaxStartups，sshd 会随机断开新连接；
+        # 只对 ssh 自身的连接错误（退出码 255）重试，deploy.sh 失败时直接报错
+        run: |
+          for wait in 5 10 20 40 0; do
+            status=0
+            ssh -i ~/.ssh/deploy_key -o BatchMode=yes -o StrictHostKeyChecking=yes -o ConnectTimeout=20 "root@$DEPLOY_HOST" || status=$?
+            [ "$status" -ne 255 ] && exit "$status"
+            [ "$wait" -eq 0 ] && break
+            echo "SSH 连接失败，${wait} 秒后重试"
+            sleep "$wait"
+          done
+          exit 255

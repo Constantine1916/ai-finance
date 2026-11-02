@@ -282,3 +282,5 @@ Next.js 构建时提示安全升级。经 `npm audit` 核实，16.4.0 存在严�
 ## 2026-11-02：推送后自动部署
 
 按用户要求增加 `.github/workflows/deploy.yml`：推送到 `main` 后先跑类型、lint 与单元测试，通过后经 SSH 运行 VPS 上的 `deploy/deploy.sh`。部署密钥为新生成的专用密钥，在服务器上限定为只能执行部署脚本（`command=` 加 `restrict`，`flock` 串行）。私钥只存于 GitHub 仓库密钥，未留在服务器上。
+
+首次自动运行：检查任务通过，SSH 步骤失败。服务器日志显示当时暴力扫描触发 sshd 的 MaxStartups 限流（`drop connection ... past MaxStartups`），Actions 的连接被随机断开；部署密钥本身经公网 IP 测试可正常登录并完成部署。工作流改为只对 SSH 连接错误（退出码 255）退避重试，最多 5 次。
