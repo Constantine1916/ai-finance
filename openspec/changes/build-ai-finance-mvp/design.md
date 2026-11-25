@@ -1,6 +1,6 @@
 ## Context
 
-动机与范围见 proposal.md。仓库目前只有文档，没有应用代码。部署目标是用户自有的一台 VPS（2 核、7.5 GiB 内存，约 4.2 GiB 已被其他服务占用；80 GB 磁盘）。机器上已有 Node 22、pm2、Docker、acme.sh，Nginx 监听 80 与 443；`aicave.cn` 已解析到这台机器，现有证书只覆盖 `aicave.cn` 与 `www.aicave.cn`。另一个项目在 Docker 中运行 PostgreSQL 17。只有用户本人使用。
+动机与范围见 proposal.md。第一阶段（1A 与 1B）代码已完成并部署在用户自有的 VPS（2 核、7.5 GiB 内存、80 GB 磁盘）上，通过独立 PostgreSQL 17 容器（127.0.0.1:5434）、pm2（`ai-finance-web` 与 `ai-finance-worker`）、acme.sh 独立证书与 Nginx 站点提供 `https://finance.aicave.cn` 服务。只有用户本人使用。
 
 数据源已在 2026-10-25 至 10-26 实测（见 `docs/data-sources.md` 与 `docs/verification.md`）：
 
@@ -11,7 +11,7 @@
 
 参考项目 OpenStock（最新提交 `855ca6a`）的数据来自 TradingView 嵌入组件与 Finnhub 报价快照，不保存历史序列，没有宏观数据。本设计参考其 Finnhub 报价用法、TradingView 组件容器与 EDGAR 访问方式。
 
-用户已确认：PostgreSQL、全栈 TypeScript、pm2 与 cron 部署、`finance.aicave.cn` 部署、默认信号阈值、关注池可编辑、优先保证时效性。仍待确认的只有标为“待确认”的项目。
+用户已确认：PostgreSQL、全栈 TypeScript、pm2 与 cron 部署、`finance.aicave.cn` 部署、默认信号阈值、关注池可编辑、优先保证时效性、Tiingo 日线数据源及移除韩国出口与 DRAM 价格序列。
 
 ## Goals / Non-Goals
 
@@ -52,14 +52,14 @@ pm2: worker（调度器）→ 各来源适配器 → 校验 → PostgreSQL 时�
 | 数据 | 来源 | 采集方式 | 目标延迟 |
 |---|---|---|---|
 | 关注池与大盘 ETF 盘中快照（约 50 个代码） | Finnhub `/quote`（免费，每分钟 60 次） | 美股交易时段每 5 分钟一轮，约每分钟 10 次请求 | ≤ 5 分钟加供应商自身延迟 |
-| 复权日线收盘 | Tiingo（待核实） | 美东 18:30 一次，次日北京时间 07:30 补采 | 收盘后数小时 |
+| 复权日线收盘 | Tiingo（已核实采用） | 交易日美东 18:30～23:30 每 60 分钟窗口采集 | 收盘后数小时 |
 | 国债收益率曲线 | 美国财政部官网 | 美东 16:00 起每 15 分钟，取到当日数据为止；次日用 FRED 交叉核对 | 当日 |
 | CPI、非农 | BLS API | 发布日美东 08:30 起每 2 分钟，最长 60 分钟 | ≤ 15 分钟 |
 | PCE | BEA API（免费密钥） | 发布日美东 08:30 起每 2 分钟，最长 60 分钟 | ≤ 15 分钟 |
 | 初请失业金 | FRED（劳工部发布后更新） | 每周四美东 08:30 起每 10 分钟，最长 3 小时 | 当日上午 |
-| 信用利差、VIX、金融条件、美联储资产负债表等 | FRED | 每日两次 | 次日（没有更快的免费来源） |
-| 财报 | EDGAR `submissions` | 平时每小时一次；财报日美东 16:00～20:00 每 10 分钟 | ≤ 15 分钟 |
-| 台积电月营收 | 官网，6-K 交叉核对 | 每月 10 日起每小时，取到为止 | ≤ 1 小时 |
+| 信用利差、VIX、金融条件、美联储资产负债表等 | FRED | 每 6 小时一次（另在初请失业金发布窗口每 10 分钟追加，最长 3 小时） | 次日（没有更快的免费来源） |
+| 财报 | EDGAR `submissions` | 平时每小时一次；每个交易日美东 16:00～20:00 每 10 分钟 | ≤ 15 分钟 |
+| 台积电月营收 | SEC 6-K（官网 403，改用 6-K 报告间核对） | 每小时一次 | ≤ 1 小时 |
 
 盘中快照存在单独的表中，标为盘中暂定，不写入日线历史；收盘后的复权日线是正式值。同一指标有更早发布的官方来源时优先使用它，后到的来源用于交叉核对，不一致则标为待确认。
 
@@ -101,9 +101,11 @@ PostgreSQL 17 + Drizzle ORM 与迁移脚本。
 | `universe_members`、`universe_changes` | 关注池当前成员（层、周期强度、是否计入云厂商汇总）与修改历史 |
 | `companies` | 代码、CIK、财年结束月、科目映射版本 |
 | `manual_entries` | 人工录入值、来源链接、录入与修改历史 |
-| `signal_rules`、`signal_states` | 阈值覆盖与修改历史；状态变化日志 |
+| `signal_rule_overrides`、`signal_states` | 阈值覆盖与修改历史；状态变化日志 |
 | `events` | 日程事件、来源、是否确认、关联序列、追加采集计划 |
 | `ingest_runs` | 任务运行记录、行数、延迟、失败原因 |
+| `sessions`、`login_attempts` | 服务端所有者会话与登录失败限流记录 |
+| `worker_heartbeat` | 采集调度器心跳时间，供 cron 监控重启 |
 
 日期规则：`obs_date` 用来源本身的日期（市场数据按美东交易日），时间戳一律存 UTC，页面显示北京时间，事件同时显示美东时间。
 
@@ -181,9 +183,9 @@ EDGAR 的科目映射见 `src/ai/companies.ts`：每个指标有一串候选科�
 
 ### 10. 前端
 
-Tailwind CSS，中文、暗色、桌面优先，数值使用等宽数字。全部图表用 ECharts（Apache-2.0）。TradingView 嵌入组件只用在个股详情的 K 线上，保留其标识与外部链接；容器参考 OpenStock 的 `components/TradingViewWidget.tsx`，改编时登记来源。盘中数据每分钟自动刷新一次页面数据，只读本地库。
+Tailwind CSS，中文、暗色“仪表盘”配色，宋体标题配等宽数字。全部图表用 ECharts（Apache-2.0）。TradingView 嵌入组件只用在个股详情的 K 线上，保留其标识与外部链接；容器参考 OpenStock 的 `components/TradingViewWidget.tsx`，改编为 `src/components/TradingViewChart.tsx` 并登记于 `THIRD_PARTY_NOTICES.md`。页面服务端渲染直接读取本地库，不自动定时轮询。
 
-页面：`/`（总览：周期象限、信号灯、未来 30 天事件）、`/macro`（六组宏观视图）、`/ai`（1B：产业周期与关注池编辑）、`/stocks/[symbol]`（1B）、`/data`（数据健康与人工录入）、`/login`。
+页面：`/`（总览：周期象限、告警灯牌、未来 30 天事件）、`/macro`（六组宏观视图）、`/ai`（1B：产业周期、关注池编辑与周期股视图）、`/stocks/[symbol]`（1B：个股详情）、`/signals/[id]`（单个信号规则与历史表现）、`/calendar`（事件日历）、`/data`（数据健康与人工录入）、`/login`。
 
 ### 11. 部署（已确认 pm2 + cron）
 
@@ -208,7 +210,7 @@ Tailwind CSS，中文、暗色、桌面优先，数值使用等宽数字。全�
 
 ## Migration Plan
 
-没有已上线的应用，不涉及数据迁移。
+1A 与 1B 均已上线部署。后续数据库结构变更通过 `drizzle/` 增量迁移执行，`deploy/deploy.sh` 在运行迁移前会自动备份 PostgreSQL。
 
 1. 1A：建立应用骨架、PostgreSQL 与迁移、适配器（FRED、财政部、BLS、BEA、Finnhub、日线）、校验与时效、宏观页面、信号与日程；部署到子域名，实际运行一周。
 2. 1B：增加 EDGAR、台积电、人工录入序列、可编辑关注池与 AI 产业页面。
@@ -217,5 +219,5 @@ Tailwind CSS，中文、暗色、桌面优先，数值使用等宽数字。全�
 
 ## Open Questions
 
-- Tiingo 免费档的确切额度与个人使用条款：注册密钥后实测。
+- Tiingo 免费档的确切额度与个人使用条款：已于 2026-10-26 实测确认并投入使用（见 `docs/data-sources.md`）。
 - 信号历史回看是否改用 FRED 历史版本数据：1A 先使用修订后数据并标注前视偏差。

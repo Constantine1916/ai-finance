@@ -284,3 +284,15 @@ Next.js 构建时提示安全升级。经 `npm audit` 核实，16.4.0 存在严�
 按用户要求增加 `.github/workflows/deploy.yml`：推送到 `main` 后先跑类型、lint 与单元测试，通过后经 SSH 运行 VPS 上的 `deploy/deploy.sh`。部署密钥为新生成的专用密钥，在服务器上限定为只能执行部署脚本（`command=` 加 `restrict`，`flock` 串行）。私钥只存于 GitHub 仓库密钥，未留在服务器上。
 
 首次自动运行：检查任务通过，SSH 步骤失败。服务器日志显示当时暴力扫描触发 sshd 的 MaxStartups 限流（`drop connection ... past MaxStartups`），Actions 的连接被随机断开；部署密钥本身经公网 IP 测试可正常登录并完成部署。工作流改为只对 SSH 连接错误（退出码 255）退避重试，最多 5 次。
+
+## 2026-11-25：文档与代码一致性同步
+
+对照线上代码与配置更新以下过时描述：`AGENTS.md`、`openspec/config.yaml`、`docs/superpowers/specs/2026-10-25-ai-finance-macro-design.md`、`openspec/changes/build-ai-finance-mvp/{proposal.md,design.md,tasks.md,specs/ai-industry/spec.md}`、`THIRD_PARTY_NOTICES.md`、`docs/data-sources.md`（同步项目上线状态、Tiingo 核实结果、台积电 6-K 交叉核对方式、移除存储价格残留、补充实际页面/表名/调度频率与锁文件依赖许可）。
+
+| 检查 | 结果 |
+| --- | --- |
+| 规格校验（`openspec validate --strict`） | 通过 |
+| 类型与 lint（`npm run typecheck && npm run lint`） | 通过 |
+| 单元测试（`npm run test`） | 通过：15 个文件、122 项测试 |
+| 密钥与空白检查（`check:secrets`、`git diff --check`） | 通过：未发现密钥泄漏与格式问题 |
+| `npm run build` / `npm run test:db` | 未单独执行（本次仅修改文档，避免直接覆盖线上 `.next`；推送 `main` 后由 CI 与 `deploy/deploy.sh` 统一构建重载） |

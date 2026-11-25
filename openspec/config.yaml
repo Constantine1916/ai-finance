@@ -6,7 +6,7 @@ context: |
   Keep OpenSpec structural headings and SHALL/MUST keywords in English.
   Project: ai-finance, independent public repository; OpenStock is a limited
     reference (TradingView widget container, EDGAR access pattern).
-  Stage: design review; no application implementation yet.
+  Stage: phase 1 (1A & 1B) implemented and deployed on finance.aicave.cn; pending 7-day validation (task 8.2) before archiving.
   Scope (phase 1, personal use): macro and liquidity dashboard, market breadth,
     cycle quadrant and transparent signal rules, event calendar (1A);
     AI hardware industry cycle, filing-based fundamentals, cyclical stock view (1B).

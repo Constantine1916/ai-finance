@@ -22,7 +22,7 @@
 
 ## 数据与组件服务
 
-FRED 上的第三方序列（S&P、Nasdaq、ICE 等）、日线行情供应商、台积电、TradingView 的名称及数据由相应权利人持有。代码许可不授予其数据的再分发权。使用条件见 [数据源说明](docs/data-sources.md)。后续实际安装依赖时另核对依赖许可；目前尚无应用依赖锁文件。
+FRED 上的第三方序列（S&P、Nasdaq、ICE 等）、日线行情供应商、台积电、TradingView 的名称及数据由相应权利人持有。代码许可不授予其数据的再分发权。使用条件见 [数据源说明](docs/data-sources.md)。运行时直接依赖已通过 `package-lock.json` 锁定（`npm@11.21.0 ci`），许可均为宽松开源许可：`next`（16.4.3，MIT）、`react` / `react-dom`（19.3.0，MIT）、`drizzle-orm`（0.45.4，Apache-2.0）、`echarts`（6.1.0，Apache-2.0）、`pg`（8.23.1，MIT）、`zod`（4.6.6，MIT）、`@node-rs/argon2`（2.2.2，MIT）。
 
 ## 字体
 

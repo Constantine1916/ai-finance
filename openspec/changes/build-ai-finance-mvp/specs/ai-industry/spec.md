@@ -64,7 +64,7 @@
 系统 SHALL 提供台积电月营收及其同比与 3 个月平均同比、美国半导体与电子元件工业产出。
 
 #### Scenario: TSMC monthly revenue cross-check
-- **WHEN** 台积电官网月营收与对应 6-K 申报的数值不一致
+- **WHEN** 后续一期台积电 SEC 6-K 报告追溯的上月、去年同月或累计数值与已入库月份不一致
 - **THEN** 该观测标为待确认，直到用户核实
 
 ### Requirement: Cyclical stock view
