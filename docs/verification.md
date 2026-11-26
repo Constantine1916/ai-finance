@@ -296,3 +296,12 @@ Next.js 构建时提示安全升级。经 `npm audit` 核实，16.4.0 存在严�
 | 单元测试（`npm run test`） | 通过：15 个文件、122 项测试 |
 | 密钥与空白检查（`check:secrets`、`git diff --check`） | 通过：未发现密钥泄漏与格式问题 |
 | `npm run build` / `npm run test:db` | 未单独执行（本次仅修改文档，避免直接覆盖线上 `.next`；推送 `main` 后由 CI 与 `deploy/deploy.sh` 统一构建重载） |
+
+## 2026-11-26：网站图标
+
+复用主站 aicave.cn 的图标（`operation-content-platform/public/assets/app-icon.png`，512×512），转为 16/32/48/64 多尺寸 `src/app/favicon.ico`，由 Next.js 自动输出 `<link rel="icon">`。`/favicon.ico` 已在 `src/proxy.ts` 的 matcher 中排除，未登录时（登录页）也能加载。
+
+| 检查 | 结果 |
+| --- | --- |
+| 类型、lint、单元测试 | 通过：15 个文件、122 项单元测试 |
+| 线上 `/favicon.ico` | 部署后核对 |
