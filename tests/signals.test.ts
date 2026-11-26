@@ -126,4 +126,10 @@ describe("cycle quadrant", () => {
     expect(trail.at(-1)!.date).toBe("2025-10-01");
     expect(trail.every((p) => Number.isFinite(p.growth) && Number.isFinite(p.inflation))).toBe(true);
   });
+
+  it("evaluates hyperscaler CapEx / OCF ratio thresholds", () => {
+    const rule = RULE_MAP.get("capex-to-ocf")!;
+    const out = rule.evaluate({ ratio: [{ date: "2025-03-31", value: 50 }, { date: "2025-06-30", value: 65 }, { date: "2026-03-31", value: 94 }] }, defaultParams(rule));
+    expect(out.map((s) => s.state)).toEqual(["normal", "watch", "warning"]);
+  });
 });

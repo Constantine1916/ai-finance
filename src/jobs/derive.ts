@@ -6,7 +6,7 @@ import { alignAsOf, drawdown, FORMULA_VERSION, ratio, sma, type Point } from "@/
 import { readSeries } from "@/pipeline/store";
 import { convertUsd } from "@/pipeline/units";
 import { MARKET_ETFS } from "@/sources/catalog";
-import { aggregateByCalendarQuarter, quarterEndDate, threeMonthYoY, valuationSeries } from "@/ai/metrics";
+import { aggregateByCalendarQuarter, capexToOcfRatio, quarterEndDate, threeMonthYoY, valuationSeries } from "@/ai/metrics";
 import { activeMembers } from "@/ai/universe";
 import { edgarSeriesId } from "./edgar";
 
@@ -96,10 +96,13 @@ export async function runDerive(db: Db) {
   // 1B：云厂商资本开支合计（只保留完整季度）、台积电 3 个月平均同比、个股估值（周度）
   try {
     const hyperscalers = members.filter((m) => m.inHyperscalerCapex);
-    const capex = aggregateByCalendarQuarter(Object.fromEntries(await Promise.all(hyperscalers.map(async (m) => [m.symbol, await readSeries(db, edgarSeriesId(m.symbol, "capex"))] as const))));
+    const capexBySymbol = Object.fromEntries(await Promise.all(hyperscalers.map(async (m) => [m.symbol, await readSeries(db, edgarSeriesId(m.symbol, "capex"))] as const)));
+    const ocfBySymbol = Object.fromEntries(await Promise.all(hyperscalers.map(async (m) => [m.symbol, await readSeries(db, edgarSeriesId(m.symbol, "ocf"))] as const)));
+    const capex = aggregateByCalendarQuarter(capexBySymbol);
     const complete = capex.filter((q) => q.total !== null);
     await save("capex:hyperscalers", complete.map((q) => ({ date: quarterEndDate(q.cq), value: q.total })));
     await save("capex:hyperscalers:yoy", complete.map((q) => ({ date: quarterEndDate(q.cq), value: q.yoy })));
+    await save("capex:hyperscalers:ocf-ratio", capexToOcfRatio(capexBySymbol, ocfBySymbol));
     await save("tsmc:revenue:3m-yoy", threeMonthYoY(await readSeries(db, "tsmc:revenue")));
   } catch (error) {
     errors.push(`AI 产业汇总：${error instanceof Error ? error.message : String(error)}`);

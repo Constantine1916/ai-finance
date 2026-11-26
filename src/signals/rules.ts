@@ -262,6 +262,33 @@ export const RULES: RuleDef[] = [
     describe: (p) => ({ warning: `台积电最近 3 个月营收合计同比低于 ${p.warning}%`, watch: `低于 ${p.watch}%` }),
     evaluate: (data, p) => valid(data.yoy ?? []).map((x) => ({ date: x.date, value: x.value, state: level(x.value, p.warning!, p.watch!, false) })),
   },
+  {
+    id: "capex-to-ocf",
+    name: "云厂商 CapEx 占经营现金流",
+    version: 1,
+    inputs: [{ key: "ratio", derived: "capex:hyperscalers:ocf-ratio" }],
+    provenance: [
+      "edgar:MSFT:capex",
+      "edgar:GOOGL:capex",
+      "edgar:AMZN:capex",
+      "edgar:META:capex",
+      "edgar:ORCL:capex",
+      "edgar:MSFT:ocf",
+      "edgar:GOOGL:ocf",
+      "edgar:AMZN:ocf",
+      "edgar:META:ocf",
+      "edgar:ORCL:ocf",
+    ],
+    revisedInputs: true,
+    priceBased: false,
+    unit: "%（合计 CapEx / OCF）",
+    params: { warning: { label: "警示阈值（高于）", default: 80, unit: "%" }, watch: { label: "关注阈值（高于）", default: 60, unit: "%" } },
+    describe: (p) => ({
+      warning: `云厂商合计资本开支占经营现金流超过 ${p.warning}%（资本开支逼近或超过自身经营造血能力）`,
+      watch: `超过 ${p.watch}%（自由现金流明显承压）`,
+    }),
+    evaluate: (data, p) => valid(data.ratio ?? []).map((x) => ({ date: x.date, value: x.value, state: level(x.value, p.warning!, p.watch!) })),
+  },
 ];
 
 export const RULE_MAP = new Map(RULES.map((r) => [r.id, r]));

@@ -252,6 +252,18 @@ export const AI_CHARTS: ChartSpec[] = [
     defaultRange: "5y",
     note: "分部收入不在结构化财务数据中，来自财报电话会或新闻稿，在数据健康页录入。资本开支持续增长而云收入跟不上，资本开支迟早会被削减。",
   },
+  {
+    id: "ai-capex-ocf",
+    title: "云厂商资本开支 / 经营现金流",
+    unit: "%",
+    lines: [{ label: "CapEx / OCF", derived: "capex:hyperscalers:ocf-ratio" }],
+    annotations: [
+      { kind: "threshold", value: 60, label: "关注 60%" },
+      { kind: "threshold", value: 80, label: "警示 80%" },
+    ],
+    defaultRange: "10y",
+    note: "按完整日历季度汇总：云厂商合计资本开支 / 合计经营现金流。比例越高说明扩产对自由现金流的消耗越大。",
+  },
   { id: "ai-tsmc", title: "台积电月营收", unit: "十亿新台币", lines: [{ label: "月营收", series: "tsmc:revenue", scale: 1e3 }], defaultRange: "5y", note: "取自台积电每月向 SEC 报送的营收 6-K，后一份报告的上月与去年同月数值用于核对。" },
   { id: "ai-tsmc-yoy", title: "台积电月营收：3 个月平均同比", unit: "%", lines: [{ label: "3 个月平均同比", derived: "tsmc:revenue:3m-yoy" }], annotations: [{ kind: "threshold", value: 0, label: "0" }], defaultRange: "5y" },
   { id: "ai-semis-ip", title: "美国半导体与电子元件工业产出同比", unit: "%", lines: [{ label: "同比", series: "fred:IPG3344S", transform: "yoy" }], annotations: [{ kind: "threshold", value: 0, label: "0" }], defaultRange: "10y" },

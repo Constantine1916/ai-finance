@@ -28,6 +28,18 @@ export function aggregateByCalendarQuarter(bySymbol: Record<string, Obs[]>) {
   });
 }
 
+// 云厂商资本开支占经营现金流比例（%）：仅计算资本开支与经营现金流都完整的日历季度
+export function capexToOcfRatio(capexBySymbol: Record<string, Obs[]>, ocfBySymbol: Record<string, Obs[]>): Point[] {
+  const capex = aggregateByCalendarQuarter(capexBySymbol);
+  const ocf = new Map(aggregateByCalendarQuarter(ocfBySymbol).map((q) => [q.cq, q.total]));
+  return capex
+    .filter((q) => q.total !== null)
+    .map((q) => {
+      const o = ocf.get(q.cq);
+      return { date: quarterEndDate(q.cq), value: o !== undefined && o !== null && o > 0 ? (q.total! / o) * 100 : null };
+    });
+}
+
 // 日历季度对应的日期（季末），用于时间轴
 export function quarterEndDate(cq: string) {
   const [y, n] = cq.split("Q");

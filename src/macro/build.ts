@@ -100,6 +100,8 @@ export function derivedInputs(derivedId: string): string[] {
   if (derivedId === "net-liquidity") return ["fred:WALCL", "fred:WTREGEN", "fred:RRPONTSYD"];
   if (derivedId === "ratio:VIX/VIX3M") return ["fred:VIXCLS", "fred:VXVCLS"];
   if (derivedId.startsWith("tsmc:")) return ["tsmc:revenue"];
+  if (derivedId === "capex:hyperscalers:ocf-ratio")
+    return ["edgar:MSFT:capex", "edgar:GOOGL:capex", "edgar:AMZN:capex", "edgar:META:capex", "edgar:ORCL:capex", "edgar:MSFT:ocf", "edgar:GOOGL:ocf", "edgar:AMZN:ocf", "edgar:META:ocf", "edgar:ORCL:ocf"];
   if (derivedId.startsWith("capex:hyperscalers")) return ["edgar:MSFT:capex", "edgar:GOOGL:capex", "edgar:AMZN:capex", "edgar:META:capex", "edgar:ORCL:capex"];
   const [kind, arg = ""] = derivedId.split(":");
   if (kind === "ratio") return arg.split("/").map((t) => `tiingo:${t}:close`);

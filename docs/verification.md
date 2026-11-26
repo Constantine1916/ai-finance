@@ -315,3 +315,14 @@ Next.js 构建时提示安全升级。经 `npm audit` 核实，16.4.0 存在严�
 | 规格校验（`openspec validate --strict`） | 通过 |
 | 类型、lint、单元测试 | 通过：15 个文件、124 项单元测试（含 FCF、现金/总债务/净现金与缺失值测试） |
 | 真实 SEC EDGAR 回填（`npm run job -- edgar`） | 通过：21 家公司写入 5,839 条观测（用时 13.1 秒），待确认 0 条；抽查 NVDA（2026-07-26 OCF 24.08B / CapEx 2.68B / 现金+短投 56.58B / 债务 33.37B / SBC 2.03B）、MSFT（2026-09-30 OCF 58.00B / CapEx 39.37B / 现金+短投 64.51B / 债务 35.48B / SBC 3.13B）、MU（2026-09-03 OCF 43.97B / CapEx 11.11B）均与申报一致 |
+
+## 2026-11-26：关注池财务质量列与首页「云厂商 CapEx 占经营现金流」灯牌
+
+- 在 `/ai` 关注池总表新增 3 列：最新一期自由现金流（FCF）、净现金、稀释股数同比（股本稀释率），并在需求端区域补齐第 4 张图 `ai-capex-ocf`（云厂商资本开支 / 经营现金流）。
+- 新增派生序列 `capex:hyperscalers:ocf-ratio` 与第 12 条信号规则 `capex-to-ocf`（默认关注 > 60%、警示 > 80%，阈值可在 `/signals/capex-to-ocf` 调整），首页总览灯牌形成完整 4×3 布局。
+
+| 检查 | 结果 |
+| --- | --- |
+| 规格校验（`openspec validate --strict`） | 通过 |
+| 类型、lint、单元测试 | 通过：15 个文件、126 项单元测试 |
+| 真实派生与信号重算（`npm run job -- derive signals`） | 通过：`capex-to-ocf` 最新完整季度 2026Q3 合计 CapEx 230.4B / OCF 198.6B = 116.0%，当前状态 `warning` |

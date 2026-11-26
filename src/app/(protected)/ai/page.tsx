@@ -16,6 +16,13 @@ export const dynamic = "force-dynamic";
 
 const pct = (v: number | null, digits = 1) => (v === null ? "—" : `${v >= 0 ? "+" : ""}${v.toFixed(digits)}%`);
 const tone = (v: number | null) => (v === null ? "text-[var(--muted)]" : v >= 0 ? "text-[var(--up)]" : "text-[var(--down)]");
+const dilutionTone = (v: number | null) => (v === null ? "text-[var(--muted)]" : v > 0 ? "text-[var(--down)]" : v < 0 ? "text-[var(--up)]" : "");
+const moneyB = (v: number | null, currency: string) => {
+  if (v === null) return "—";
+  const b = v / 1e9;
+  const sign = b > 0 ? "+" : "";
+  return currency === "USD" ? `${sign}$${b.toFixed(1)}B` : `${sign}${b.toFixed(1)}B ${currency}`;
+};
 const fmt = (d: Date) => new Intl.DateTimeFormat("zh-CN", { timeZone: "Asia/Shanghai", dateStyle: "short", timeStyle: "short" }).format(d);
 const etTime = (d: Date) => new Intl.DateTimeFormat("zh-CN", { timeZone: "America/New_York", hour: "2-digit", minute: "2-digit", hour12: false }).format(d);
 const input = "field px-2 py-1";
@@ -73,7 +80,7 @@ export default async function AiPage({ searchParams }: { searchParams: Promise<{
             {pendingQuarter.cq} 尚不完整，未计入合计：已申报 {Object.keys(pendingQuarter.byCompany).join("、") || "无"}；尚缺 {pendingQuarter.missing.join("、")}。
           </p>
         )}
-        <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-2">{["ai-capex", "ai-capex-yoy", "ai-cloud-growth"].map(chart)}</div>
+        <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-2">{["ai-capex", "ai-capex-yoy", "ai-capex-ocf", "ai-cloud-growth"].map(chart)}</div>
       </section>
 
       <section id="supply" className="mt-10 scroll-mt-14">
@@ -90,7 +97,7 @@ export default async function AiPage({ searchParams }: { searchParams: Promise<{
           return (
             <div key={layer.id} className="mt-4 overflow-x-auto panel">
               <h3 className="panel-title">{layer.name}</h3>
-              <table className="mt-2 w-full min-w-[1080px] text-sm">
+              <table className="mt-2 w-full min-w-[1280px] text-sm">
                 <thead>
                   <tr className="text-xs">
                     <th className={`${th} text-left`}>代码</th>
@@ -103,6 +110,9 @@ export default async function AiPage({ searchParams }: { searchParams: Promise<{
                     <th className={`${th} text-right`}>距 200 日线</th>
                     <th className={`${th} text-right`}>营收同比</th>
                     <th className={`${th} text-right`}>毛利率</th>
+                    <th className={`${th} text-right`}>自由现金流</th>
+                    <th className={`${th} text-right`}>净现金</th>
+                    <th className={`${th} text-right`}>股本同比</th>
                     <th className={`${th} text-right`}>市盈率</th>
                     <th className={`${th} text-right`}>市净率</th>
                     <th className={`${th} text-left`}>调整</th>
@@ -139,6 +149,9 @@ export default async function AiPage({ searchParams }: { searchParams: Promise<{
                           <span className="block text-xs text-[var(--muted)]">{r.lastPeriod ? `${r.annual ? "年报" : "季报"} ${r.lastPeriod}` : filling ? "采集中" : ""}</span>
                         </td>
                         <td className="num px-2 py-1.5 text-right">{r.grossMargin === null ? <span className="text-xs text-[var(--muted)]">未申报</span> : `${r.grossMargin.toFixed(1)}%`}</td>
+                        <td className={`num whitespace-nowrap px-2 py-1.5 text-right ${tone(r.fcf)}`}>{moneyB(r.fcf, r.currency)}</td>
+                        <td className={`num whitespace-nowrap px-2 py-1.5 text-right ${tone(r.netCash)}`}>{moneyB(r.netCash, r.currency)}</td>
+                        <td className={`num whitespace-nowrap px-2 py-1.5 text-right ${dilutionTone(r.shareDilution)}`}>{pct(r.shareDilution)}</td>
                         <td className="num px-2 py-1.5 text-right">{ratioCell(r.pe, r.annual, filling)}</td>
                         <td className="num px-2 py-1.5 text-right">{ratioCell(r.pb, r.annual, filling)}</td>
                         <td className="px-2 py-1.5">

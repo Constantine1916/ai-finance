@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { aggregateByCalendarQuarter, historyRange, quarterEndDate, threeMonthYoY, valuationSeries } from "@/ai/metrics";
+import { aggregateByCalendarQuarter, capexToOcfRatio, historyRange, quarterEndDate, threeMonthYoY, valuationSeries } from "@/ai/metrics";
 
 const o = (obsDate: string, value: number) => ({ obsDate, value });
 
@@ -78,5 +78,12 @@ describe("valuation", () => {
   it("summarizes the history range and current percentile", () => {
     expect(historyRange([10, 20, 30, 40])).toMatchObject({ min: 10, median: 30, max: 40, percentile: 100 });
     expect(historyRange([null, null])).toBeNull();
+  });
+
+  it("computes hyperscaler CapEx / OCF ratio only on complete quarters", () => {
+    const capex = { MSFT: [o("2026-06-30", 30), o("2026-09-30", 40)], GOOGL: [o("2026-06-30", 20)] };
+    const ocf = { MSFT: [o("2026-06-30", 50), o("2026-09-30", 55)], GOOGL: [o("2026-06-30", 50)] };
+    const r = capexToOcfRatio(capex, ocf);
+    expect(r).toEqual([{ date: "2026-06-30", value: 50 }]);
   });
 });
