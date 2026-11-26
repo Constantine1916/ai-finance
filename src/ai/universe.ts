@@ -23,7 +23,7 @@ export async function ensureDefaultUniverse(db: Db, lookup: (symbol: string) => 
 
 export async function activeMembers(db: Db) {
   return db
-    .select({ symbol: universeMembers.symbol, layer: universeMembers.layer, cyclicality: universeMembers.cyclicality, inHyperscalerCapex: universeMembers.inHyperscalerCapex, cik: companies.cik, name: companies.name })
+    .select({ symbol: universeMembers.symbol, layer: universeMembers.layer, cyclicality: universeMembers.cyclicality, inHyperscalerCapex: universeMembers.inHyperscalerCapex, cik: companies.cik, name: companies.name, conceptMapVersion: companies.conceptMapVersion })
     .from(universeMembers)
     .innerJoin(companies, eq(companies.symbol, universeMembers.symbol))
     .where(eq(universeMembers.active, true))

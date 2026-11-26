@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { grossMargin, inventoryDays, opMargin, periodYoY } from "@/ai/ratios";
+import { freeCashFlow, grossMargin, inventoryDays, netCash, opMargin, periodYoY, totalCash, totalDebt } from "@/ai/ratios";
 
 const o = (obsDate: string, value: number) => ({ obsDate, value });
 
@@ -21,5 +21,20 @@ describe("filing ratios", () => {
   it("compares with the period roughly a year earlier even when fiscal dates drift", () => {
     const r = periodYoY([o("2025-07-27", 50), o("2026-07-26", 75), o("2026-10-25", 80)]);
     expect(r.map((p) => p.value)).toEqual([null, 50, null]);
+  });
+
+  it("computes free cash flow as OCF minus CapEx and leaves missing inputs null", () => {
+    const r = freeCashFlow([o("2026-03-31", 100), o("2026-06-30", 120)], [o("2026-03-31", 35)]);
+    expect(r.map((p) => p.value)).toEqual([65, null]);
+  });
+
+  it("computes total cash, total debt, and net cash without fabricating missing debt", () => {
+    const cash = [o("2026-03-31", 20), o("2026-06-30", 25)];
+    const stInv = [o("2026-03-31", 30)];
+    const stDebt = [o("2026-03-31", 5)];
+    const ltDebt = [o("2026-03-31", 10)];
+    expect(totalCash(cash, stInv).map((p) => p.value)).toEqual([50, 25]);
+    expect(totalDebt(stDebt, ltDebt).map((p) => p.value)).toEqual([15]);
+    expect(netCash(cash, stInv, stDebt, ltDebt).map((p) => p.value)).toEqual([35, null]);
   });
 });

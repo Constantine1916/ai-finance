@@ -5,13 +5,13 @@ export type Range = "1y" | "3y" | "5y" | "10y" | "max";
 export const RANGES: Range[] = ["1y", "3y", "5y", "10y", "max"];
 export const RANGE_LABEL: Record<Range, string> = { "1y": "1 年", "3y": "3 年", "5y": "5 年", "10y": "10 年", max: "全部" };
 
-export type Formula = "grossMargin" | "opMargin" | "inventoryDays" | "revenueYoY";
+export type Formula = "grossMargin" | "opMargin" | "inventoryDays" | "revenueYoY" | "fcf" | "totalCash" | "totalDebt" | "netCash" | "shareDilutionYoY";
 
 export type LineSpec =
   | { label: string; series: string; transform?: Transform; scale?: number } // 观测序列；scale 为显示时的除数
   | { label: string; derived: string; scale?: number } // derived_values 中的派生序列
   | { label: string; series: string; newer: string } // 主序列 + 更早发布来源补上最新日期（如 FRED + 财政部）
-  | { label: string; formula: Formula; symbol: string; annual?: boolean }; // 由财报序列计算的比率
+  | { label: string; formula: Formula; symbol: string; annual?: boolean; scale?: number }; // 由财报序列计算的比率或组合指标
 
 export type Annotation =
   | { kind: "threshold"; value: number; label: string }
@@ -264,7 +264,7 @@ export const INDEXED_CHARTS = new Set(["breadth", "indices"]);
 export const CHARTS = new Map([...SECTIONS.flatMap((s) => s.charts), ...AI_CHARTS].map((c) => [c.id, c] as const));
 
 // 个股图表：按代码动态生成，编号形如 stock:NVDA:margins
-export const STOCK_CHART_KINDS = ["price", "revenue", "margins", "inventory", "capex", "pe", "pb"] as const;
+export const STOCK_CHART_KINDS = ["price", "revenue", "margins", "cashflow", "balance", "inventory", "capex", "dilution", "pe", "pb"] as const;
 export type StockChartKind = (typeof STOCK_CHART_KINDS)[number];
 
 export function stockChartSpec(symbol: string, kind: StockChartKind, annual: boolean, currency: string): ChartSpec {
@@ -295,8 +295,49 @@ export function stockChartSpec(symbol: string, kind: StockChartKind, annual: boo
       };
     case "inventory":
       return { id, title: "存货天数", unit: "天", lines: [{ label: "存货天数", formula: "inventoryDays", symbol, annual }], defaultRange: "10y", note: `存货天数 = 期末存货 / ${annual ? "全年营业成本 × 365" : "单季营业成本 × 91"}。半导体周期见顶时常见增速放缓与存货堆积。` };
+    case "cashflow":
+      return {
+        id,
+        title: `现金流（${period}）：经营现金流与自由现金流`,
+        unit: money,
+        lines: [
+          { label: "经营现金流", series: `edgar:${symbol}:ocf${sfx}`, scale: 1e9 },
+          { label: "自由现金流 (FCF)", formula: "fcf", symbol, annual, scale: 1e9 },
+          { label: "资本开支", series: `edgar:${symbol}:capex${sfx}`, scale: 1e9 },
+        ],
+        annotations: [{ kind: "threshold", value: 0, label: "0" }],
+        defaultRange: "10y",
+        note: "自由现金流 = 经营现金流 − 资本开支。资本开支大幅上升时可对照经营现金流判断是否依靠内生现金扩产。",
+      };
+    case "balance":
+      return {
+        id,
+        title: "现金、总债务与净现金（期末）",
+        unit: money,
+        lines: [
+          { label: "现金及短期投资", formula: "totalCash", symbol, annual, scale: 1e9 },
+          { label: "总债务", formula: "totalDebt", symbol, annual, scale: 1e9 },
+          { label: "净现金", formula: "netCash", symbol, annual, scale: 1e9 },
+        ],
+        annotations: [{ kind: "threshold", value: 0, label: "0" }],
+        defaultRange: "10y",
+        note: "现金含现金及等价物与短期有价证券；净现金 = 现金及短期投资 − 总债务（正数表示现金多于债务）。未申报债务科目时总债务与净现金为空。",
+      };
     case "capex":
       return { id, title: `资本开支（${period}）`, unit: money, lines: [{ label: "资本开支", series: `edgar:${symbol}:capex${sfx}`, scale: 1e9 }], defaultRange: "10y" };
+    case "dilution":
+      return {
+        id,
+        title: `股权激励（${period}）与股本稀释率`,
+        unit: `${money}；同比为 %`,
+        lines: [
+          { label: `股权激励（${money}）`, series: `edgar:${symbol}:sbc${sfx}`, scale: 1e9 },
+          { label: "稀释股数同比 %", formula: "shareDilutionYoY", symbol, annual },
+        ],
+        annotations: [{ kind: "threshold", value: 0, label: "0" }],
+        defaultRange: "10y",
+        note: "股权激励与股本稀释率单位不同，共用纵轴仅对照趋势；稀释股数同比为正表示增发或激励稀释，为负表示回购净缩减股本。",
+      };
     case "pe":
       return { id, title: "滚动 12 个月市盈率", unit: "倍", lines: [{ label: "市盈率", derived: `pe:${symbol}` }], defaultRange: "10y", note: "市值 / 最近四季净利润合计；财报在期末 60 天后才计入。亏损期间为空。周期股在盈利高峰时市盈率最低，不宜据此判断贵贱。" };
     case "pb":

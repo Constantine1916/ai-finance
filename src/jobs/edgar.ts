@@ -1,7 +1,7 @@
 import { and, eq, inArray } from "drizzle-orm";
 import type { Db } from "@/db/types";
-import { filings, ingestRuns, observationRevisions, observations, pendingObservations } from "@/db/schema";
-import { conceptsFor, METRICS, type Metric } from "@/ai/companies";
+import { companies, filings, ingestRuns, observationRevisions, observations, pendingObservations } from "@/db/schema";
+import { CONCEPT_MAP_VERSION, conceptsFor, METRICS, type Metric } from "@/ai/companies";
 import { annualSeries, consistentMismatches, instantSeries, quarterlySeries, type PeriodValue } from "@/ai/extract";
 import { activeMembers } from "@/ai/universe";
 import { upsertSeries, writeObservations } from "@/pipeline/store";
@@ -128,9 +128,11 @@ export async function runEdgar(db: Db, userAgent: string, jobId = "edgar") {
         periodic.length ? (await db.select({ a: filings.accessionNo }).from(filings).where(inArray(filings.accessionNo, periodic.map((p) => p.accessionNumber)))).map((r) => r.a) : [],
       );
       const fresh = periodic.filter((p) => !known.has(p.accessionNumber));
-      if (fresh.length === 0) continue;
+      const needsRemap = m.conceptMapVersion !== CONCEPT_MAP_VERSION;
+      if (fresh.length === 0 && !needsRemap) continue;
       const cf = await fetchCompanyFacts(m.cik, userAgent, signal);
       const r = await ingestCompanyFacts(db, m.symbol, m.cik, cf);
+      if (needsRemap) await db.update(companies).set({ conceptMapVersion: CONCEPT_MAP_VERSION }).where(eq(companies.symbol, m.symbol));
       written += r.written;
       if (r.mismatches.length) notes.push(`${m.symbol} 四季合计不一致，已列入待确认：${r.mismatches.join("、")}`);
       const inFacts = factAccessions(cf);

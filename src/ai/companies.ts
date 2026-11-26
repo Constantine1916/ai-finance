@@ -46,7 +46,23 @@ export const DEFAULT_UNIVERSE: DefaultMember[] = [
   { symbol: "ORCL", layer: "hyperscaler", cyclicality: "growth", inHyperscalerCapex: true },
 ];
 
-export type Metric = "revenue" | "cogs" | "grossProfit" | "opIncome" | "netIncome" | "rnd" | "capex" | "dilutedShares" | "inventory" | "equity";
+export type Metric =
+  | "revenue"
+  | "cogs"
+  | "grossProfit"
+  | "opIncome"
+  | "netIncome"
+  | "rnd"
+  | "capex"
+  | "ocf"
+  | "sbc"
+  | "dilutedShares"
+  | "inventory"
+  | "equity"
+  | "cash"
+  | "shortTermInvestments"
+  | "shortTermDebt"
+  | "longTermDebt";
 
 // additive=false 的指标（加权平均股数）不能用累计值相减推算单季，也不做四季合计核对
 export const METRICS: Record<Metric, { name: string; kind: "duration" | "instant"; unit: "currency" | "shares"; additive?: false }> = {
@@ -57,9 +73,15 @@ export const METRICS: Record<Metric, { name: string; kind: "duration" | "instant
   netIncome: { name: "净利润", kind: "duration", unit: "currency" },
   rnd: { name: "研发费用", kind: "duration", unit: "currency" },
   capex: { name: "资本开支", kind: "duration", unit: "currency" },
+  ocf: { name: "经营现金流", kind: "duration", unit: "currency" },
+  sbc: { name: "股权激励", kind: "duration", unit: "currency" },
   dilutedShares: { name: "稀释加权股数", kind: "duration", unit: "shares", additive: false },
   inventory: { name: "存货", kind: "instant", unit: "currency" },
   equity: { name: "股东权益", kind: "instant", unit: "currency" },
+  cash: { name: "现金及等价物", kind: "instant", unit: "currency" },
+  shortTermInvestments: { name: "短期投资", kind: "instant", unit: "currency" },
+  shortTermDebt: { name: "短期债务", kind: "instant", unit: "currency" },
+  longTermDebt: { name: "长期债务", kind: "instant", unit: "currency" },
 };
 
 // 每个指标的候选科目，逐期取第一个有值的科目（处理公司在不同年份更换科目名称）
@@ -71,9 +93,15 @@ export const DEFAULT_CONCEPTS: Record<Metric, string[]> = {
   netIncome: ["NetIncomeLoss", "ProfitLossAttributableToOwnersOfParent"],
   rnd: ["ResearchAndDevelopmentExpense", "ResearchAndDevelopmentExpenseExcludingAcquiredInProcessCost"],
   capex: ["PaymentsToAcquirePropertyPlantAndEquipment", "PaymentsToAcquireProductiveAssets", "PurchaseOfPropertyPlantAndEquipmentClassifiedAsInvestingActivities"],
+  ocf: ["NetCashProvidedByUsedInOperatingActivities", "NetCashProvidedByUsedInOperatingActivitiesContinuingOperations", "CashFlowsFromUsedInOperatingActivities"],
+  sbc: ["ShareBasedCompensation", "AllocatedShareBasedCompensationExpense", "ExpenseFromSharebasedPaymentTransactionsWithEmployees"],
   dilutedShares: ["WeightedAverageNumberOfDilutedSharesOutstanding", "WeightedAverageNumberOfShareOutstandingBasicAndDiluted"],
   inventory: ["InventoryNet", "Inventories"],
   equity: ["StockholdersEquity", "EquityAttributableToOwnersOfParent"],
+  cash: ["CashAndCashEquivalentsAtCarryingValue", "CashAndCashEquivalents"],
+  shortTermInvestments: ["MarketableSecuritiesCurrent", "ShortTermInvestments", "DebtSecuritiesCurrent", "AvailableForSaleSecuritiesDebtSecuritiesCurrent", "OtherShortTermInvestments"],
+  shortTermDebt: ["DebtCurrent", "LongTermDebtCurrent", "ShortTermBorrowings", "NotesPayableCurrent", "CurrentPortionOfLongTermDebt"],
+  longTermDebt: ["LongTermDebtNoncurrent", "LongTermNotesPayable", "ConvertibleLongTermNotesPayable", "LongTermDebtAndCapitalLeaseObligations", "LongtermBorrowings", "LongTermDebt"],
 };
 
 // 个别公司的科目映射（2026-10-28 按其申报核对）：未登记的指标使用默认候选
@@ -82,7 +110,7 @@ export const CONCEPT_OVERRIDES: Record<string, Partial<Record<Metric, string[]>>
   AVGO: { netIncome: ["NetIncomeLoss", "ProfitLoss"], equity: ["StockholdersEquity", "StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest"] },
 };
 
-export const CONCEPT_MAP_VERSION = "2026-10-28";
+export const CONCEPT_MAP_VERSION = "2026-11-26";
 
 export function conceptsFor(symbol: string, metric: Metric): string[] {
   return CONCEPT_OVERRIDES[symbol]?.[metric] ?? DEFAULT_CONCEPTS[metric];

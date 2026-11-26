@@ -4,7 +4,7 @@ import { derivedValues, observations, pendingObservations, series } from "@/db/s
 import { readDerived } from "@/jobs/derive";
 import { easternDate } from "@/pipeline/calendar";
 import { annualized3m, sma, yoy, type Point } from "@/pipeline/derived";
-import { grossMargin, inventoryDays, opMargin, periodYoY } from "@/ai/ratios";
+import { freeCashFlow, grossMargin, inventoryDays, netCash, opMargin, periodYoY, totalCash, totalDebt } from "@/ai/ratios";
 import { freshness } from "@/pipeline/freshness";
 import { readSeries } from "@/pipeline/store";
 import type { Frequency } from "@/pipeline/types";
@@ -71,11 +71,21 @@ async function formulaPoints(db: Db, line: Extract<LineSpec, { formula: string }
       return inventoryDays(await read("inventory", true), await read("cogs"), Boolean(line.annual));
     case "revenueYoY":
       return periodYoY(await read("revenue"));
+    case "fcf":
+      return freeCashFlow(await read("ocf"), await read("capex"));
+    case "totalCash":
+      return totalCash(await read("cash", true), await read("shortTermInvestments", true));
+    case "totalDebt":
+      return totalDebt(await read("shortTermDebt", true), await read("longTermDebt", true));
+    case "netCash":
+      return netCash(await read("cash", true), await read("shortTermInvestments", true), await read("shortTermDebt", true), await read("longTermDebt", true));
+    case "shareDilutionYoY":
+      return periodYoY(await read("dilutedShares"));
   }
 }
 
 async function linePoints(db: Db, line: LineSpec): Promise<Point[]> {
-  if ("formula" in line) return formulaPoints(db, line);
+  if ("formula" in line) return scaled(await formulaPoints(db, line), line.scale);
   if ("derived" in line) return scaled(await readDerived(db, line.derived), line.scale);
   const base = toPoints(await readSeries(db, line.series));
   if ("newer" in line) {
@@ -102,8 +112,22 @@ export function derivedInputs(derivedId: string): string[] {
 export function lineSourceIds(line: LineSpec): string[] {
   if ("formula" in line) {
     const sfx = line.annual ? ":fy" : "";
-    if (line.formula === "inventoryDays") return [`edgar:${line.symbol}:inventory`, `edgar:${line.symbol}:cogs${sfx}`];
-    return [`edgar:${line.symbol}:revenue${sfx}`];
+    switch (line.formula) {
+      case "inventoryDays":
+        return [`edgar:${line.symbol}:inventory`, `edgar:${line.symbol}:cogs${sfx}`];
+      case "fcf":
+        return [`edgar:${line.symbol}:ocf${sfx}`, `edgar:${line.symbol}:capex${sfx}`];
+      case "totalCash":
+        return [`edgar:${line.symbol}:cash`, `edgar:${line.symbol}:shortTermInvestments`];
+      case "totalDebt":
+        return [`edgar:${line.symbol}:shortTermDebt`, `edgar:${line.symbol}:longTermDebt`];
+      case "netCash":
+        return [`edgar:${line.symbol}:cash`, `edgar:${line.symbol}:shortTermInvestments`, `edgar:${line.symbol}:shortTermDebt`, `edgar:${line.symbol}:longTermDebt`];
+      case "shareDilutionYoY":
+        return [`edgar:${line.symbol}:dilutedShares${sfx}`];
+      default:
+        return [`edgar:${line.symbol}:revenue${sfx}`];
+    }
   }
   if ("derived" in line) return derivedInputs(line.derived);
   return "newer" in line ? [line.series, line.newer] : [line.series];

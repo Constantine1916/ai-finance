@@ -31,7 +31,7 @@
 - **THEN** 页面按时间列出每次新增、移除与分类调整
 
 ### Requirement: Filing based fundamentals
-系统 SHALL 从 SEC 申报数据计算关注池公司的单季营收、营收同比、毛利率、营业利润率、存货、存货天数、资本开支与研发费用；每个数值 MUST 链接到对应申报文件。
+系统 SHALL 从 SEC 申报数据计算关注池公司的单季营收、营收同比、毛利率、营业利润率、经营现金流、自由现金流、现金与总债务（净现金）、股权激励与股本稀释率、存货、存货天数、资本开支与研发费用；每个数值 MUST 链接到对应申报文件。
 
 #### Scenario: Year-to-date values in quarterly filings
 - **WHEN** 季报给出的是年初至今累计值

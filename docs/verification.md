@@ -305,3 +305,13 @@ Next.js 构建时提示安全升级。经 `npm audit` 核实，16.4.0 存在严�
 | --- | --- |
 | 类型、lint、单元测试 | 通过：15 个文件、122 项单元测试 |
 | 线上 `/favicon.ico` | 部署后核对 |
+
+## 2026-11-26：个股现金流、资产负债表与股本稀释图表
+
+复用现有 SEC EDGAR `companyfacts` 接口，在 `src/ai/companies.ts` 新增 6 个财报科目（`ocf`、`sbc`、`cash`、`shortTermInvestments`、`shortTermDebt`、`longTermDebt`，`CONCEPT_MAP_VERSION` 升级至 `2026-11-26`，`runEdgar` 在版本变化时自动重采并更新版本）；在个股详情页 `/stocks/[symbol]` 新增 3 张图表：现金流（经营现金流、自由现金流、资本开支）、现金/总债务/净现金、股权激励与稀释股数同比。
+
+| 检查 | 结果 |
+| --- | --- |
+| 规格校验（`openspec validate --strict`） | 通过 |
+| 类型、lint、单元测试 | 通过：15 个文件、124 项单元测试（含 FCF、现金/总债务/净现金与缺失值测试） |
+| 真实 SEC EDGAR 回填（`npm run job -- edgar`） | 通过：21 家公司写入 5,839 条观测（用时 13.1 秒），待确认 0 条；抽查 NVDA（2026-07-26 OCF 24.08B / CapEx 2.68B / 现金+短投 56.58B / 债务 33.37B / SBC 2.03B）、MSFT（2026-09-30 OCF 58.00B / CapEx 39.37B / 现金+短投 64.51B / 债务 35.48B / SBC 3.13B）、MU（2026-09-03 OCF 43.97B / CapEx 11.11B）均与申报一致 |

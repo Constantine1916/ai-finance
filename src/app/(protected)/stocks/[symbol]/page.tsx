@@ -37,7 +37,9 @@ export default async function StockPage({ params }: { params: Promise<{ symbol: 
 
   const now = new Date();
   const annual = info.mode === "annual";
-  const kinds: StockChartKind[] = annual ? ["price", "revenue", "margins", "inventory", "capex"] : ["price", "revenue", "margins", "inventory", "capex", "pe", "pb"];
+  const kinds: StockChartKind[] = annual
+    ? ["price", "revenue", "margins", "cashflow", "balance", "inventory", "capex", "dilution"]
+    : ["price", "revenue", "margins", "cashflow", "balance", "inventory", "capex", "dilution", "pe", "pb"];
   const specs = kinds.map((k) => stockChartSpec(info.symbol, k, annual, info.currency));
   const [price, recent, metas, directory] = await Promise.all([
     priceStats(db, info.symbol, now),
